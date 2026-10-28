@@ -1,0 +1,7 @@
+{
+  "uuid": "nitro@eltobsjr.gmail.com",
+  "name": "Nitro",
+  "description": "Central estilo NitroSense para o Acer Nitro: modos de desempenho (acer_wmi), ventoinhas, temperaturas e GPU na barra superior.",
+  "version-name": "0.1.0",
+  "shell-version": ["48", "49", "50"]
+}
