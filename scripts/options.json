@@ -1,0 +1,3 @@
+{"title":"Nitro Indicator","settings":[],"extras":[
+ {"key":"system","label":"Instalar o helper do sistema, a regra do polkit e a opção do acer_wmi? (pede a senha de administrador)","default":true}
+]}

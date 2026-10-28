@@ -22,6 +22,19 @@ O `install.sh` pede a senha de administrador **uma vez** (só se algo mudou) par
 instalar a parte do sistema. No **Wayland** é preciso fazer **logout/login** depois
 de instalar ou atualizar (o `install.sh` não recarrega o Shell).
 
+### Tema e opções (escolhidos na instalação)
+
+O `./install.sh` pergunta no terminal, antes de copiar qualquer coisa:
+
+- **Paleta**: Catppuccin Macchiato (padrão), Frappé ou Mocha, com uma prévia em cores.
+- **Cor de destaque**: 12 opções, ou **seguir o destaque do GNOME** (47+).
+- **Opções da extensão**: se deve instalar o helper do sistema (polkit + `acer_wmi`, pede senha).
+
+Nenhuma cor fica escrita no código: o `stylesheet.css` é gerado na instalação a partir da paleta que você escolheu.
+Para refazer as escolhas, rode `./install.sh --reconfigure`. Sem terminal (CI, `curl | bash`) ou com `--yes`,
+vale o que já estava salvo ou o padrão. Também aceita `--palette macchiato|frappe|mocha`, `--accent blue|mauve|…` e `--system-accent`.
+Detalhes do padrão visual em [`docs/DESIGN.md`](docs/DESIGN.md).
+
 ## O que o instalador faz
 
 | Arquivo | Para quê |

@@ -75,6 +75,11 @@ function findNvidia() {
     return null;
 }
 
+// Nome do notebook pelo DMI (nada de modelo escrito no código)
+function machineName() {
+    return readText('/sys/class/dmi/id/product_name') || readText('/sys/class/dmi/id/product_family') || 'Acer Nitro';
+}
+
 function level(value, warn, hot) {
     if (value === null)
         return 'nitro-idle';
@@ -127,7 +132,7 @@ class Indicator extends PanelMenu.Button {
         const head = new St.BoxLayout({style_class: 'nitro-head', x_expand: true});
         this._avatar = new St.Icon({style_class: 'nitro-avatar', icon_size: 22});
         const titles = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true, y_align: Clutter.ActorAlign.CENTER});
-        titles.add_child(new St.Label({text: 'Acer Nitro V15', style_class: 'nitro-title'}));
+        titles.add_child(new St.Label({text: machineName(), style_class: 'nitro-title'}));
         this._subtitle = new St.Label({style_class: 'nitro-sub'});
         titles.add_child(this._subtitle);
         this._pill = new St.Label({style_class: 'nitro-pill', y_align: Clutter.ActorAlign.CENTER});
@@ -168,7 +173,8 @@ class Indicator extends PanelMenu.Button {
         // ---- GPU ----
         const gpu = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-section nitro-gpu', x_expand: true});
         const gpuHead = new St.BoxLayout({style_class: 'nitro-gpu-head'});
-        gpuHead.add_child(new St.Label({text: 'GeForce RTX 3050', style_class: 'nitro-section-title', x_expand: true}));
+        this._gpuTitle = new St.Label({text: 'GPU NVIDIA', style_class: 'nitro-section-title', x_expand: true});
+        gpuHead.add_child(this._gpuTitle);
         this._gpuState = new St.Label({style_class: 'nitro-gpu-state'});
         gpuHead.add_child(this._gpuState);
         gpu.add_child(gpuHead);
@@ -282,7 +288,7 @@ class Indicator extends PanelMenu.Button {
         });
         try {
             const proc = Gio.Subprocess.new(['nvidia-smi',
-                '--query-gpu=temperature.gpu,power.draw,clocks.gr,memory.used,memory.total,utilization.gpu',
+                '--query-gpu=name,temperature.gpu,power.draw,clocks.gr,memory.used,memory.total,utilization.gpu',
                 '--format=csv,noheader,nounits'], Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_SILENCE);
             proc.communicate_utf8_async(null, cancel, (p, res) => {
                 GLib.source_remove(timeout);
@@ -290,7 +296,9 @@ class Indicator extends PanelMenu.Button {
                     this._gpuCancel = null;
                 try {
                     const [, out] = p.communicate_utf8_finish(res);
-                    const [temp, power, clock, used, total, util] = out.trim().split(',').map(s => parseFloat(s));
+                    const [name, ...rest] = out.trim().split(',').map(s => s.trim());
+                    const [temp, power, clock, used, total, util] = rest.map(s => parseFloat(s));
+                    this._gpuTitle.text = name.replace(/^NVIDIA\s+/, '').replace(/^GeForce\s+/, 'GeForce ');
                     this._gpu = {temp, power, clock, used, total, util};
                     this._renderGpu(true);
                 } catch {}

@@ -14,6 +14,15 @@ MODPROBE="/etc/modprobe.d/acer-nitro.conf"
 
 echo "==> Instalando Nitro Indicator"
 
+# 0) tema e opções: pergunta no terminal (use --yes para aceitar os padrões e
+#    --reconfigure para perguntar de novo; também aceita --palette, --accent, --system-accent)
+command -v python3 >/dev/null 2>&1 || { echo "ERRO: python3 não encontrado. Instale com: sudo dnf install python3" >&2; exit 1; }
+SETUP="$ROOT/scripts/eltob-setup.py"
+ANSWERS="$(mktemp)"
+trap 'rm -f "$ANSWERS"' EXIT
+python3 "$SETUP" ask --uuid "$UUID" --options "$ROOT/scripts/options.json" \
+    --schema-dir "$ROOT/extension/schemas" --answers "$ANSWERS" "$@"
+
 # 1) checa o hardware/driver
 if ! modinfo acer_wmi >/dev/null 2>&1; then
     echo "ERRO: módulo acer_wmi não encontrado — isto é só para notebooks Acer Nitro/Predator." >&2
@@ -26,7 +35,10 @@ command -v nvidia-smi >/dev/null 2>&1 ||
 # 2) parte do sistema (root): helper, regra do polkit e predator_v4 no acer_wmi.
 #    Só pede senha se algo mudou.
 same() { [ -f "$2" ] && cmp -s "$1" "$2"; }
-if same "$ROOT/system/nitro-profile" "$HELPER" &&
+WANT_SYSTEM="$(python3 "$SETUP" extra --answers "$ANSWERS" system)"
+if [ "$WANT_SYSTEM" != "true" ]; then
+    echo "==> Parte do sistema ignorada (instale depois com ./install.sh)"
+elif same "$ROOT/system/nitro-profile" "$HELPER" &&
    same "$ROOT/system/com.eltobsjr.nitro.policy" "$POLICY" &&
    same "$ROOT/system/acer-nitro.conf" "$MODPROBE"; then
     echo "==> Arquivos do sistema já atualizados"
@@ -39,7 +51,7 @@ else
 fi
 
 # 3) recarrega o acer_wmi com predator_v4=1 se ainda não estiver ativo
-if [ "$(cat /sys/module/acer_wmi/parameters/predator_v4 2>/dev/null)" != "Y" ]; then
+if [ "$WANT_SYSTEM" = "true" ] && [ "$(cat /sys/module/acer_wmi/parameters/predator_v4 2>/dev/null)" != "Y" ]; then
     echo "==> Recarregando acer_wmi com predator_v4=1"
     sudo modprobe -r acer_wmi && sudo modprobe acer_wmi ||
         echo "AVISO: não deu pra recarregar agora — reinicie o PC para ativar."
@@ -53,7 +65,7 @@ fi
 echo "==> Copiando extensão para $EXT_DEST"
 mkdir -p "$EXT_BASE"
 STAGE="$(mktemp -d "$EXT_BASE/.$UUID.XXXXXX")"
-cleanup() { rm -rf "$STAGE" "${OLD:-}"; }
+cleanup() { rm -rf "$STAGE" "${OLD:-}" "$ANSWERS"; }
 trap cleanup EXIT
 cp -r "$ROOT/extension/." "$STAGE/"
 chmod 755 "$STAGE"
@@ -62,6 +74,10 @@ if [ -d "$EXT_DEST" ]; then
     mv "$EXT_DEST" "$OLD"
 fi
 mv "$STAGE" "$EXT_DEST"
+
+echo "==> Aplicando tema e opções"
+python3 "$SETUP" apply --uuid "$UUID" --answers "$ANSWERS" --dest "$EXT_DEST" \
+    --options "$ROOT/scripts/options.json" --schema "" --title "Nitro"
 
 echo ""
 echo "✅ Instalado!"
