@@ -12,4 +12,24 @@
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/nitro-profile</annotate>
   </action>
+  <action id="com.eltobsjr.nitro.boost">
+    <description>Ligar ou desligar o overclock da GPU do Acer Nitro</description>
+    <message>Autenticação necessária para mudar o overclock da GPU</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/nitro-boost</annotate>
+  </action>
+  <action id="com.eltobsjr.nitro.fan">
+    <description>Mudar o modo das ventoinhas do Acer Nitro</description>
+    <message>Autenticação necessária para mudar o modo das ventoinhas</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/nitro-fan</annotate>
+  </action>
 </policyconfig>

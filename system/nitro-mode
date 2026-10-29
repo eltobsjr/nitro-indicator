@@ -1,0 +1,237 @@
+#!/usr/bin/python3
+"""Modos do Nitro: conjuntos nomeados de ajustes (perfil, ventoinhas, GPU, CPU) que se ligam e desligam de uma vez.
+
+Uso: nitro-mode on NOME | off | toggle NOME | active | list | show NOME | status
+Os modos ficam em ~/.config/nitro/modes.json (a extensão Nitro edita; pode editar à mão).
+Enquanto um modo está ligado, o estado anterior fica em ~/.local/state/nitro/mode-active.json e o "off" restaura.
+Chama os helpers de root via pkexec (o polkit libera na sessão ativa, sem senha).
+Saída 0 = tudo aplicado, 1 = algum passo falhou (os demais foram aplicados; o motivo vai no stderr), 2 = uso errado.
+"""
+import fcntl
+import json
+import os
+import re
+import subprocess
+import sys
+
+CONFIG = os.path.expanduser('~/.config/nitro/modes.json')
+STATE_DIR = os.path.expanduser('~/.local/state/nitro')
+ACTIVE = os.path.join(STATE_DIR, 'mode-active.json')
+LOCK = os.path.join(STATE_DIR, 'mode.lock')
+PROFILE_FILE = '/sys/firmware/acpi/platform_profile'
+BIN = '/usr/local/bin'
+FANS = ('auto', 'max')
+OFFSETS = ('off', 'boost', 'max', 'custom')
+
+# Campos de um modo. null/ausente = "não mexer" naquele ajuste. Os mesmos padrões ficam em extension.js (MODE_FIELDS).
+FIELDS = {
+    'profile': 'balanced-performance',  # perfil térmico da Acer
+    'fan': 'max',                       # auto | max
+    'gpu_offset': 'boost',              # off | boost | max | custom
+    'gpu_custom': {'gpc': 100, 'mem': 500},  # MHz, usado quando gpu_offset = custom
+    'power_limit': None,                # watts da GPU
+    'cpu_performance': True,            # tuned throughput-performance (governor/EPP em performance)
+    'only_on_ac': True,                 # ignora o modo na bateria
+    'auto_gamemode': False,             # só a extensão usa: liga quando o GameMode registra um jogo
+}
+
+BUILTIN = [
+    {'id': 'gamer', 'name': 'Gamer', 'icon': 'input-gaming-symbolic', **FIELDS, 'auto_gamemode': True},
+    {'id': 'silencio', 'name': 'Silêncio', 'icon': 'weather-clear-night-symbolic', 'profile': 'quiet', 'fan': 'auto',
+     'gpu_offset': 'off', 'gpu_custom': FIELDS['gpu_custom'], 'power_limit': None, 'cpu_performance': False,
+     'only_on_ac': False, 'auto_gamemode': False},
+]
+
+
+def load_modes():
+    try:
+        with open(CONFIG) as f:
+            data = json.load(f)
+        modes = data['modes'] if isinstance(data, dict) else None
+        if isinstance(modes, list):
+            out = []
+            for m in modes:
+                if isinstance(m, dict) and re.fullmatch(r'[a-z0-9-]{1,32}', str(m.get('id', ''))):
+                    out.append({**FIELDS, 'name': m['id'], **m})
+            if out:
+                return out
+    except (OSError, ValueError, KeyError):
+        pass
+    return json.loads(json.dumps(BUILTIN))
+
+
+def find_mode(name):
+    for m in load_modes():
+        if m['id'] == name:
+            return m
+    return None
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return None
+
+
+def run(*cmd):
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return False, str(e)
+    return r.returncode == 0, (r.stderr.strip() or r.stdout.strip())
+
+
+def on_ac():
+    for p in ('ACAD', 'AC', 'ADP1'):
+        v = read(f'/sys/class/power_supply/{p}/online')
+        if v is not None:
+            return v == '1'
+    return True
+
+
+def tuned_active():
+    ok, out = run('tuned-adm', 'active')
+    return out.split(': ')[-1] if ok and ': ' in out else None
+
+
+def fan_mode():
+    ok, out = run('pkexec', f'{BIN}/nitro-fan', 'status')
+    return out if ok else None
+
+
+class Steps:
+    """Roda os passos, guarda as falhas e segue em frente: um passo quebrado não impede os outros."""
+
+    def __init__(self):
+        self.failed = []
+
+    def do(self, name, *cmd):
+        ok, msg = run(*cmd)
+        if not ok and 'Not Supported' in msg:
+            msg = 'o driver desta GPU não deixa mudar esse valor (comum em notebook)'
+        if not ok:
+            self.failed.append(f'{name}: {msg or "falhou"}')
+        return ok
+
+    def finish(self):
+        for f in self.failed:
+            print(f, file=sys.stderr)
+        return 1 if self.failed else 0
+
+
+def boot_id():
+    return read('/proc/sys/kernel/random/boot_id')
+
+
+def active_state():
+    """Modo ligado agora. Um estado de antes do último boot não vale: o hardware voltou ao padrão."""
+    try:
+        with open(ACTIVE) as f:
+            st = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(st, dict) or 'mode' not in st:
+        return None
+    if st.get('boot') != boot_id():
+        try:
+            os.unlink(ACTIVE)
+        except OSError:
+            pass
+        return None
+    return st
+
+
+def turn_off():
+    st = active_state()
+    if not st:
+        return 0
+    prev = st.get('prev') or {}
+    s = Steps()
+    s.do('overclock', 'pkexec', f'{BIN}/nitro-boost', 'off')
+    if st.get('power_limit_set'):  # só desfaz o que o modo mexeu
+        s.do('limite de potência', 'pkexec', f'{BIN}/nitro-boost', 'power', 'default')
+    s.do('ventoinhas', 'pkexec', f'{BIN}/nitro-fan', prev.get('fan') if prev.get('fan') in FANS else 'auto')
+    if prev.get('tuned'):
+        s.do('cpu', 'tuned-adm', 'profile', prev['tuned'])
+    if prev.get('profile'):
+        s.do('perfil', 'pkexec', f'{BIN}/nitro-profile', prev['profile'])
+    try:
+        os.unlink(ACTIVE)
+    except OSError:
+        pass
+    return s.finish()
+
+
+def turn_on(name):
+    m = find_mode(name)
+    if not m:
+        print(f'modo desconhecido: {name}', file=sys.stderr)
+        return 2
+    st = active_state()
+    if st and st['mode'] == name:
+        return 0
+    if st:  # troca direta: volta ao estado de antes e aplica o novo, senão sobra ajuste do modo anterior
+        rc = turn_off()
+        if rc:
+            return rc
+    if m['only_on_ac'] and not on_ac():
+        print(f'na bateria: modo {m["name"]} não aplicado (só na tomada)')
+        return 0
+    prev = {'profile': read(PROFILE_FILE), 'tuned': tuned_active(), 'fan': fan_mode()}
+    with open(ACTIVE, 'w') as f:
+        json.dump({'mode': name, 'boot': boot_id(), 'prev': prev, 'power_limit_set': bool(m['power_limit'])}, f)
+
+    s = Steps()
+    if m['cpu_performance']:
+        s.do('cpu', 'tuned-adm', 'profile', 'throughput-performance')  # isto reseta o perfil da Acer; reaplicado abaixo
+    if m['profile'] or m['cpu_performance']:
+        s.do('perfil', 'pkexec', f'{BIN}/nitro-profile', m['profile'] or prev['profile'] or 'balanced')
+    if m['fan'] in FANS:
+        s.do('ventoinhas', 'pkexec', f'{BIN}/nitro-fan', m['fan'])
+    go = m['gpu_offset']
+    if go == 'custom':
+        c = m['gpu_custom']
+        s.do('overclock', 'pkexec', f'{BIN}/nitro-boost', 'set', str(int(c['gpc'])), str(int(c['mem'])), 'performance')
+    elif go in OFFSETS:
+        s.do('overclock', 'pkexec', f'{BIN}/nitro-boost', go)
+    if m['power_limit']:
+        s.do('limite de potência', 'pkexec', f'{BIN}/nitro-boost', 'power', str(m['power_limit']))
+    return s.finish()
+
+
+def main():
+    args = sys.argv[1:]
+    cmd = args[0] if args else ''
+    if cmd == 'list' and len(args) == 1:
+        for m in load_modes():
+            print(f'{m["id"]}\t{m["name"]}')
+        return 0
+    if cmd == 'show' and len(args) == 2:
+        m = find_mode(args[1])
+        print(json.dumps(m, indent=2, ensure_ascii=False) if m else 'desconhecido')
+        return 0 if m else 2
+    if cmd == 'active' and len(args) == 1:
+        st = active_state()
+        print(st['mode'] if st else '')
+        return 0
+    if cmd == 'status' and len(args) == 1:
+        st = active_state()
+        print(json.dumps({'mode': st['mode'] if st else None, 'profile': read(PROFILE_FILE)}))
+        return 0
+    if not ((cmd in ('on', 'toggle') and len(args) == 2) or (cmd == 'off' and len(args) == 1)):
+        print(__doc__, file=sys.stderr)
+        return 2
+    os.makedirs(STATE_DIR, exist_ok=True)
+    with open(LOCK, 'w') as lock:  # extensão e lançador podem chamar ao mesmo tempo
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if cmd == 'off':
+            return turn_off()
+        if cmd == 'toggle':
+            st = active_state()
+            return turn_off() if st and st['mode'] == args[1] else turn_on(args[1])
+        return turn_on(args[1])
+
+
+sys.exit(main())

@@ -1,0 +1,134 @@
+#!/usr/bin/python3
+"""Overclock leve da GPU NVIDIA + EPP do CPU em performance. Chamado pela extensão Nitro via pkexec.
+
+Uso: nitro-boost off|boost|max|status
+     nitro-boost set GPC MEM [EPP]   offsets livres em MHz (dentro da faixa do driver)
+     nitro-boost power W|default     limite de potência da GPU em watts
+Os offsets valem até o próximo boot/reload do driver; a extensão reaplica no login e na tomada.
+"""
+import ctypes
+import glob
+import os
+import sys
+
+# nível: (offset do clock da GPU, offset do clock da memória, EPP do CPU)
+LEVELS = {
+    'off': (0, 0, None),
+    'boost': (100, 500, 'performance'),
+    'max': (150, 1000, 'performance'),
+}
+EPP_GLOB = '/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'
+EPP_SAVED = '/run/nitro-boost-epp'
+
+
+def die(msg, code=1):
+    print(msg, file=sys.stderr)
+    sys.exit(code)
+
+
+def nvml():
+    try:
+        lib = ctypes.CDLL('libnvidia-ml.so.1')
+    except OSError:
+        die('libnvidia-ml.so.1 não encontrada (driver NVIDIA instalado?)', 4)
+
+    def call(name, *args):
+        rc = getattr(lib, name)(*args)
+        if rc != 0:
+            lib.nvmlErrorString.restype = ctypes.c_char_p
+            die(f'{name}: {lib.nvmlErrorString(rc).decode()}', 5)
+
+    call('nvmlInit_v2')
+    handle = ctypes.c_void_p()
+    call('nvmlDeviceGetHandleByIndex_v2', 0, ctypes.byref(handle))
+    return call, handle
+
+
+def get_offsets(call, handle):
+    gpc, mem = ctypes.c_int(), ctypes.c_int()
+    call('nvmlDeviceGetGpcClkVfOffset', handle, ctypes.byref(gpc))
+    call('nvmlDeviceGetMemClkVfOffset', handle, ctypes.byref(mem))
+    return gpc.value, mem.value
+
+
+def set_epp(value):
+    files = glob.glob(EPP_GLOB)
+    if not files:
+        return
+    if value is None:  # off: volta ao que estava antes do boost
+        try:
+            value = open(EPP_SAVED).read().strip()
+            os.unlink(EPP_SAVED)
+        except OSError:
+            return
+    elif not os.path.exists(EPP_SAVED):
+        open(EPP_SAVED, 'w').write(open(files[0]).read())
+    for f in files:
+        with open(f, 'w') as fh:
+            fh.write(value)
+
+
+def set_power(call, handle, arg):
+    lo, hi, dflt = ctypes.c_uint(), ctypes.c_uint(), ctypes.c_uint()
+    call('nvmlDeviceGetPowerManagementLimitConstraints', handle, ctypes.byref(lo), ctypes.byref(hi))
+    call('nvmlDeviceGetPowerManagementDefaultLimit', handle, ctypes.byref(dflt))
+    mw = dflt.value if arg == 'default' else int(float(arg) * 1000)
+    if not lo.value <= mw <= hi.value:
+        die(f'limite fora da faixa do driver: {mw // 1000} W (aceita {lo.value // 1000}–{hi.value // 1000} W)', 7)
+    call('nvmlDeviceSetPowerManagementLimit', handle, ctypes.c_uint(mw))
+    print(f'power: {mw // 1000} W')
+
+
+def clamp_range(call, handle, gpc, mem):
+    lo, hi = ctypes.c_int(), ctypes.c_int()
+    call('nvmlDeviceGetGpcClkMinMaxVfOffset', handle, ctypes.byref(lo), ctypes.byref(hi))
+    if not lo.value <= gpc <= hi.value:
+        die(f'offset da GPU fora da faixa: {gpc} (aceita {lo.value} a {hi.value})', 7)
+    call('nvmlDeviceGetMemClkMinMaxVfOffset', handle, ctypes.byref(lo), ctypes.byref(hi))
+    if not lo.value <= mem <= hi.value:
+        die(f'offset da memória fora da faixa: {mem} (aceita {lo.value} a {hi.value})', 7)
+
+
+def main():
+    args = sys.argv[1:]
+    arg = args[0] if args else ''
+    if arg == 'status' and len(args) == 1:
+        call, handle = nvml()
+        print('gpc=%d mem=%d' % get_offsets(call, handle))
+        return
+    if os.geteuid() != 0:
+        die('precisa de root (use pkexec)', 3)
+    if arg == 'power' and len(args) == 2:
+        call, handle = nvml()
+        try:
+            set_power(call, handle, args[1])
+        except ValueError:
+            die(f'valor inválido: {args[1]!r}', 2)
+        return
+    if arg == 'set' and len(args) in (3, 4):
+        try:
+            gpc, mem = int(args[1]), int(args[2])
+        except ValueError:
+            die('GPC e MEM precisam ser inteiros (MHz)', 2)
+        epp = args[3] if len(args) == 4 else None
+        if epp not in (None, 'performance', 'balance_performance', 'balance_power', 'power', 'default'):
+            die(f'EPP inválido: {epp!r}', 2)
+        label = 'set'
+    elif arg in LEVELS and len(args) == 1:
+        gpc, mem, epp = LEVELS[arg]
+        label = arg
+    else:
+        die(f'uso: nitro-boost off|boost|max|status | set GPC MEM [EPP] | power W|default (recebi {args!r})', 2)
+
+    call, handle = nvml()
+    clamp_range(call, handle, gpc, mem)
+    call('nvmlDeviceSetGpcClkVfOffset', handle, ctypes.c_int(gpc))
+    call('nvmlDeviceSetMemClkVfOffset', handle, ctypes.c_int(mem))
+    set_epp(epp)
+    got = get_offsets(call, handle)
+    if got != (gpc, mem):
+        die(f'offset não aplicado: pedido {(gpc, mem)}, ficou {got}', 6)
+    print(f'{label}: gpc={gpc} mem={mem} epp={epp or "restaurado"}')
+
+
+main()

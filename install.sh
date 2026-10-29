@@ -9,6 +9,11 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXT_BASE="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions"
 EXT_DEST="$EXT_BASE/$UUID"
 HELPER="/usr/local/bin/nitro-profile"
+BOOST="/usr/local/bin/nitro-boost"
+FAN="/usr/local/bin/nitro-fan"
+MODE_BIN="$HOME/.local/bin/nitro-mode"
+KMOD_DIR="/lib/modules/$(uname -r)/extra"
+FANCONF="/etc/modules-load.d/nitro_fan.conf"
 POLICY="/usr/share/polkit-1/actions/com.eltobsjr.nitro.policy"
 MODPROBE="/etc/modprobe.d/acer-nitro.conf"
 
@@ -39,16 +44,43 @@ WANT_SYSTEM="$(python3 "$SETUP" extra --answers "$ANSWERS" system)"
 if [ "$WANT_SYSTEM" != "true" ]; then
     echo "==> Parte do sistema ignorada (instale depois com ./install.sh)"
 elif same "$ROOT/system/nitro-profile" "$HELPER" &&
+   same "$ROOT/system/nitro-boost" "$BOOST" &&
+   same "$ROOT/system/nitro-fan" "$FAN" &&
+   same "$ROOT/system/acer-nitro-fan.conf" "$FANCONF" &&
    same "$ROOT/system/com.eltobsjr.nitro.policy" "$POLICY" &&
    same "$ROOT/system/acer-nitro.conf" "$MODPROBE"; then
     echo "==> Arquivos do sistema já atualizados"
 else
     echo "==> Instalando helper, polkit e opção do acer_wmi (pede senha de administrador)"
     sudo install -m 755 "$ROOT/system/nitro-profile" "$HELPER"
+    sudo install -m 755 "$ROOT/system/nitro-boost" "$BOOST"
+    sudo install -m 755 "$ROOT/system/nitro-fan" "$FAN"
+    sudo install -m 644 "$ROOT/system/acer-nitro-fan.conf" "$FANCONF"
     sudo install -m 644 "$ROOT/system/com.eltobsjr.nitro.policy" "$POLICY"
     sudo install -m 644 "$ROOT/system/acer-nitro.conf" "$MODPROBE"
-    command -v restorecon >/dev/null 2>&1 && sudo restorecon "$HELPER" "$POLICY" "$MODPROBE" || true
+    command -v restorecon >/dev/null 2>&1 && sudo restorecon "$HELPER" "$BOOST" "$FAN" "$POLICY" "$MODPROBE" "$FANCONF" || true
 fi
+
+# 2b) módulo nitro_fan (controle das ventoinhas): compila para o kernel atual e instala.
+#     Precisa de kernel-devel e gcc; depois de atualizar o kernel, rode o install.sh de novo.
+if [ "$WANT_SYSTEM" = "true" ]; then
+    if [ -d "/lib/modules/$(uname -r)/build" ] && command -v make >/dev/null 2>&1; then
+        echo "==> Compilando o módulo nitro_fan para o kernel $(uname -r)"
+        make -C "$ROOT/system/kmod" >/dev/null
+        if ! same "$ROOT/system/kmod/nitro_fan.ko" "$KMOD_DIR/nitro_fan.ko"; then
+            sudo install -D -m 644 "$ROOT/system/kmod/nitro_fan.ko" "$KMOD_DIR/nitro_fan.ko"
+            sudo depmod -a
+        fi
+        [ -e /sys/kernel/nitro_fan/mode ] || sudo modprobe nitro_fan ||
+            echo "AVISO: não deu pra carregar o nitro_fan — controle de ventoinhas indisponível."
+    else
+        echo "AVISO: sem kernel-devel/make para o kernel atual — controle de ventoinhas indisponível (sudo dnf install kernel-devel gcc make)."
+    fi
+fi
+
+# 2c) nitro-mode: comando dos modos, sem root (também usado pelos lançadores de jogos)
+mkdir -p "$(dirname "$MODE_BIN")"
+install -m 755 "$ROOT/system/nitro-mode" "$MODE_BIN"
 
 # 3) recarrega o acer_wmi com predator_v4=1 se ainda não estiver ativo
 if [ "$WANT_SYSTEM" = "true" ] && [ "$(cat /sys/module/acer_wmi/parameters/predator_v4 2>/dev/null)" != "Y" ]; then

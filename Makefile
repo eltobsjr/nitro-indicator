@@ -19,8 +19,10 @@ disable:
 
 # Remove a extensão, o estado e os arquivos do sistema (pede senha)
 uninstall:
-	@rm -rf "$(DEST)" "$(STATE)"
-	@sudo rm -f /usr/local/bin/nitro-profile /usr/share/polkit-1/actions/com.eltobsjr.nitro.policy /etc/modprobe.d/acer-nitro.conf
+	@rm -rf "$(DEST)" "$(STATE)"; sudo modprobe -r nitro_fan 2>/dev/null || true
+	@sudo rm -f /usr/local/bin/nitro-profile /usr/local/bin/nitro-boost /usr/local/bin/nitro-fan /usr/share/polkit-1/actions/com.eltobsjr.nitro.policy /etc/modprobe.d/acer-nitro.conf /etc/modules-load.d/nitro_fan.conf
+	@sudo rm -f /lib/modules/*/extra/nitro_fan.ko && sudo depmod -a || true
+	@rm -f $(HOME)/.local/bin/nitro-mode
 	@echo "Removido. O acer_wmi volta ao normal no próximo boot."
 
 # Checagem estática: sintaxe JS/Python/JSON, schema e o tema (todas as paletas e cores de destaque)

@@ -3,11 +3,15 @@ import GObject from 'gi://GObject';
 import St from 'gi://St';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+import {ModesSection, loadModes, activeModeId} from './modes.js';
 
 // Perfil térmico exposto pelo acer_wmi com predator_v4=1 (/etc/modprobe.d/acer-nitro.conf).
 // Escrita via /usr/local/bin/nitro-profile + polkit (com.eltobsjr.nitro.policy, sem senha na sessão ativa).
@@ -16,14 +20,34 @@ const CHOICES_FILE = '/sys/firmware/acpi/platform_profile_choices';
 const HELPER = '/usr/local/bin/nitro-profile';
 const AC_FILE = '/sys/class/power_supply/ACAD/online';
 const STATE_FILE = GLib.build_filenamev([GLib.get_user_state_dir(), 'nitro', 'profile']);
+const FAN_HELPER = '/usr/local/bin/nitro-fan';
+const FAN_NODE = '/sys/kernel/nitro_fan/mode';
+const FAN_FILE = GLib.build_filenamev([GLib.get_user_state_dir(), 'nitro', 'fan']);
+const MODE_BIN = GLib.build_filenamev([GLib.get_home_dir(), '.local', 'bin', 'nitro-mode']);
 
-// "performance" (Turbo) aparece nas choices mas o firmware do ANV15-51 recusa (EIO), então fica de fora.
+// "performance" (Turbo, valor 5) aparece nas choices mas o firmware do ANV15-51 não tem Turbo: o bitmap de
+// perfis suportados (misc setting 0x0A) é 0x53 = quiet|balanced|performance(4)|eco, e o SMM recusa o 5 (EIO).
+// O "Performance" do NitroSense no Windows é o mesmo valor 4 = balanced-performance aqui, o máximo da máquina.
 const MODES = [
     {id: 'low-power', label: 'Eco', icon: 'power-profile-power-saver-symbolic', cls: 'eco'},
     {id: 'quiet', label: 'Silencioso', icon: 'weather-clear-night-symbolic', cls: 'quiet'},
     {id: 'balanced', label: 'Equilibrado', icon: 'power-profile-balanced-symbolic', cls: 'balanced'},
     {id: 'balanced-performance', label: 'Performance', icon: 'power-profile-performance-symbolic', cls: 'perf'},
 ];
+
+// Ventoinhas: o módulo nitro_fan (system/kmod) fala com a BIOS pelo mesmo comando WMI do NitroSense.
+const FANS = [
+    {id: 'auto', label: 'Automático', icon: 'weather-windy-symbolic', cls: 'balanced'},
+    {id: 'max', label: 'Máximo', icon: 'weather-storm-symbolic', cls: 'perf'},
+];
+
+// O gamemoded avisa por D-Bus (ClientCount) quando um jogo abre e fecha
+const GAMEMODE = {name: 'com.feralinteractive.GameMode', path: '/com/feralinteractive/GameMode', iface: 'com.feralinteractive.GameMode'};
+
+const PEAK = 'balanced-performance';
+// Tecla NitroSense/Turbo: o EC manda scancode PS/2 0xf5 no teclado AT, o hwdb do systemd mapeia p/ KEY_PROG1,
+// que no XKB vira XF86Launch1. Não passa pelo acer_wmi, então dá pra pegar no Shell sem root.
+const TURBO_KEY = 'XF86Launch1';
 
 const PANEL_REFRESH_S = 3;
 const MENU_REFRESH_MS = 1500;
@@ -44,6 +68,22 @@ function readInt(path) {
     const t = readText(path);
     const n = t === null ? NaN : parseInt(t, 10);
     return Number.isFinite(n) ? n : null;
+}
+
+// Roda um comando sem travar o Shell; cb(ok, mensagem, status)
+function execAsync(argv, cb) {
+    try {
+        const proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+        proc.communicate_utf8_async(null, null, (p, res) => {
+            let out = '', err = '';
+            try {
+                [, out, err] = p.communicate_utf8_finish(res);
+            } catch {}
+            cb(p.get_successful(), (err || out || '').trim(), p.get_exit_status());
+        });
+    } catch (e) {
+        cb(false, e.message, -1);
+    }
 }
 
 function findHwmon(name) {
@@ -98,6 +138,10 @@ class Indicator extends PanelMenu.Button {
         this._choices = new Set((readText(CHOICES_FILE) ?? '').split(/\s+/));
         this._modes = MODES.filter(m => this._choices.has(m.id));
         this._current = null;
+        this._fan = null;
+        this._autoStartedMode = null;
+        this._gameActive = false;
+        this._gm = null;
         this._gpuCancel = null;
         this._gpu = null;
         this._menuTimer = 0;
@@ -111,6 +155,7 @@ class Indicator extends PanelMenu.Button {
         this.add_child(box);
 
         this._buildMenu();
+        this._watchGameMode();
         this.menu.connect('open-state-changed', (_m, open) => this._onMenuOpen(open));
         this._refreshPanel();
     }
@@ -158,6 +203,33 @@ class Indicator extends PanelMenu.Button {
         this._error = new St.Label({style_class: 'nitro-error', visible: false});
         this._error.clutter_text.line_wrap = true;
         this._container('nitro-item nitro-error-item').add_child(this._error);
+
+        // ---- ventoinhas ----
+        const fan = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
+        fan.add_child(new St.Label({text: 'Ventoinhas', style_class: 'nitro-section-title'}));
+        const fanGrid = new St.BoxLayout({style_class: 'nitro-modes', x_expand: true});
+        this._fanTiles = new Map();
+        for (const f of FANS) {
+            const inner = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
+            inner.add_child(new St.Icon({icon_name: f.icon, icon_size: 20, style_class: 'nitro-mode-icon', x_align: Clutter.ActorAlign.CENTER}));
+            inner.add_child(new St.Label({text: f.label, style_class: 'nitro-mode-label', x_align: Clutter.ActorAlign.CENTER}));
+            const tile = new St.Button({style_class: `nitro-mode nitro-${f.cls}`, child: inner, x_expand: true, can_focus: true});
+            tile.connect('clicked', () => this._setFan(f.id));
+            fanGrid.add_child(tile);
+            this._fanTiles.set(f.id, tile);
+        }
+        fan.add_child(fanGrid);
+        this._fanNote = new St.Label({style_class: 'nitro-sub'});
+        fan.add_child(this._fanNote);
+        this._container('nitro-item').add_child(fan);
+
+        // ---- modos (Gamer e os que o usuário criar) ----
+        this._modesSection = new ModesSection({
+            profiles: MODES,
+            onToggle: id => this._toggleMode(id),
+            onError: text => this._showError(text),
+        });
+        this._container('nitro-item').add_child(this._modesSection.actor);
 
         // ---- sensores ----
         const sensors = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-section', x_expand: true});
@@ -230,6 +302,15 @@ class Indicator extends PanelMenu.Button {
         return this._current;
     }
 
+    // Tecla Turbo: alterna entre o modo mais forte que o firmware aceita e o último modo antes dele
+    _turboKey() {
+        const p = this._readProfile();
+        if (p === PEAK)
+            this._apply(this._lastNonPeak ?? 'balanced', true);
+        else
+            this._apply(PEAK, true);
+    }
+
     _refreshPanel() {
         const p = this._readProfile();
         const mode = MODES.find(m => m.id === p);
@@ -238,6 +319,7 @@ class Indicator extends PanelMenu.Button {
         const t = this._cpuTemp();
         this._panelLabel.text = t === null ? '' : `${t}°`;
         this._panelLabel.style_class = `nitro-panel-label ${t !== null && t >= 90 ? 'nitro-hot-text' : ''}`;
+        this._modesSection.setActive(activeModeId());
         return GLib.SOURCE_CONTINUE;
     }
 
@@ -250,7 +332,8 @@ class Indicator extends PanelMenu.Button {
         this._avatar.icon_name = mode?.icon ?? 'power-profile-performance-symbolic';
         this._avatar.style_class = `nitro-avatar nitro-${mode?.cls ?? 'turbo'}`;
         this._subtitle.text = ac ? 'Na tomada' : 'Na bateria';
-        this._pill.text = mode?.label ?? (p ?? '—');
+        const activeMode = loadModes().find(m => m.id === this._modesSection._active);
+        this._pill.text = activeMode?.name ?? mode?.label ?? (p ?? '—');
         this._pill.style_class = `nitro-pill nitro-${mode?.cls ?? 'turbo'}`;
         for (const [id, tile] of this._tiles) {
             if (id === p)
@@ -258,6 +341,8 @@ class Indicator extends PanelMenu.Button {
             else
                 tile.remove_style_pseudo_class('checked');
         }
+
+        this._renderFan(ac);
 
         const cpu = this._cpuTemp();
         this._setRow(this._rows.cpu, (cpu ?? 0) / 100, cpu === null ? '—' : `${cpu} °C`, level(cpu, 75, 90));
@@ -353,6 +438,8 @@ class Indicator extends PanelMenu.Button {
                     [, , err] = p.communicate_utf8_finish(res);
                 } catch {}
                 if (p.get_successful()) {
+                    if (this._current && this._current !== PEAK && id === PEAK)
+                        this._lastNonPeak = this._current;
                     this._current = id;
                     this._ext.saveProfile(id);
                     if (interactive)
@@ -375,6 +462,103 @@ class Indicator extends PanelMenu.Button {
         }
     }
 
+    // ---- ventoinhas ----
+
+    _fanAvailable() {
+        return readText(FAN_NODE) !== null;
+    }
+
+    _renderFan() {
+        const ok = this._fanAvailable();
+        const cur = ok ? readText(FAN_NODE) : null;
+        for (const [id, tile] of this._fanTiles) {
+            tile.reactive = ok;
+            tile.opacity = ok ? 255 : 110;
+            if (ok && id === (cur === 'unknown' ? this._fan : cur))
+                tile.add_style_pseudo_class('checked');
+            else
+                tile.remove_style_pseudo_class('checked');
+        }
+        this._fanNote.text = ok
+            ? (cur === 'unknown' && !this._fan ? 'A BIOS controla (padrão)' : 'Controle manual ativo')
+            : 'Módulo nitro_fan não carregado — rode ./install.sh';
+    }
+
+    _setFan(id) {
+        this._error.visible = false;
+        execAsync(['pkexec', FAN_HELPER, id], (ok, msg, status) => {
+            if (ok) {
+                this._fan = id;
+                this._ext.saveFan(id);
+            } else {
+                this._showError(status === 126 ? 'Autorização cancelada.' : `Não deu pra mudar as ventoinhas${msg ? `: ${msg}` : '.'}`);
+            }
+            if (this.menu.isOpen)
+                this._refreshMenu();
+        });
+    }
+
+    // ---- modos ----
+
+    _toggleMode(id) {
+        this._error.visible = false;
+        this._modesSection.setBusy(id);
+        execAsync([MODE_BIN, 'toggle', id], (ok, msg) => {
+            this._modesSection.setBusy(null);
+            this._modesSection.setActive(activeModeId());
+            if (!ok)
+                this._showError(msg ? `Modo: ${msg}` : 'Não deu pra aplicar o modo.');
+            this._refreshPanel();
+            if (this.menu.isOpen)
+                this._refreshMenu();
+        });
+    }
+
+    _showError(text) {
+        this._error.text = text;
+        this._error.visible = true;
+    }
+
+    // Quando o GameMode registra um jogo, liga o modo marcado como "ligar ao abrir jogo"; ao fechar, desliga só o que ligamos
+    _watchGameMode() {
+        Gio.DBusProxy.new_for_bus(Gio.BusType.SESSION,
+            Gio.DBusProxyFlags.DO_NOT_AUTO_START, null,
+            GAMEMODE.name, GAMEMODE.path, GAMEMODE.iface, null, (_o, res) => {
+                try {
+                    this._gm = Gio.DBusProxy.new_for_bus_finish(res);
+                } catch {
+                    return;
+                }
+                if (!this._gm)
+                    return;
+                this._gmIds = [
+                    this._gm.connect('g-properties-changed', () => this._readGameMode()),
+                    this._gm.connect('notify::g-name-owner', () => this._readGameMode()),
+                ];
+                this._readGameMode();
+            });
+    }
+
+    _readGameMode() {
+        const count = this._gm?.g_name_owner ? this._gm.get_cached_property('ClientCount')?.unpack() ?? 0 : 0;
+        const active = count > 0;
+        if (active === this._gameActive)
+            return;
+        this._gameActive = active;
+        if (active) {
+            const id = this._modesSection.autoGameModeId();
+            if (id && !activeModeId()) {
+                this._autoStartedMode = id;
+                this._toggleMode(id);
+            }
+        } else if (this._autoStartedMode) {
+            const id = this._autoStartedMode;
+            this._autoStartedMode = null;
+            if (activeModeId() === id)
+                this._toggleMode(id);
+        }
+    }
+
     _osd(id) {
         const mode = MODES.find(m => m.id === id);
         if (!mode)
@@ -386,6 +570,9 @@ class Indicator extends PanelMenu.Button {
 
     destroy() {
         this._onMenuOpen(false);
+        for (const id of this._gmIds ?? [])
+            this._gm?.disconnect(id);
+        this._gm = null;
         this._gpuCancel?.cancel();
         super.destroy();
     }
@@ -402,15 +589,55 @@ export default class NitroExtension extends Extension {
         const saved = readText(STATE_FILE);
         if (saved && saved !== readText(PROFILE_FILE))
             this._indicator._apply(saved, false);
+
+        // As ventoinhas também voltam ao padrão da BIOS a cada boot
+        const fan = readText(FAN_FILE);
+        if (FANS.some(f => f.id === fan) && readText(FAN_NODE) !== null)
+            this._indicator._setFan(fan);
+
+        this._grabTurboKey();
+    }
+
+    _grabTurboKey() {
+        const action = global.display.grab_accelerator(TURBO_KEY, Meta.KeyBindingFlags.NONE);
+        if (action === Meta.KeyBindingAction.NONE)
+            return;
+        this._keyAction = action;
+        this._keyName = Meta.external_binding_name_for_action(action);
+        Main.wm.allowKeybinding(this._keyName, Shell.ActionMode.ALL);
+        this._keyId = global.display.connect('accelerator-activated', (_d, a) => {
+            if (a === this._keyAction)
+                this._indicator?._turboKey();
+        });
+    }
+
+    _releaseTurboKey() {
+        if (this._keyId) {
+            global.display.disconnect(this._keyId);
+            this._keyId = 0;
+        }
+        if (this._keyAction) {
+            global.display.ungrab_accelerator(this._keyAction);
+            Main.wm.allowKeybinding(this._keyName, Shell.ActionMode.NONE);
+            this._keyAction = 0;
+        }
     }
 
     disable() {
+        this._releaseTurboKey();
         if (this._panelTimer) {
             GLib.source_remove(this._panelTimer);
             this._panelTimer = 0;
         }
         this._indicator?.destroy();
         this._indicator = null;
+    }
+
+    saveFan(id) {
+        try {
+            GLib.mkdir_with_parents(GLib.path_get_dirname(FAN_FILE), 0o755);
+            GLib.file_set_contents(FAN_FILE, id);
+        } catch {}
     }
 
     saveProfile(id) {

@@ -2,3 +2,12 @@
 memory/
 CLAUDE.md
 extension/stylesheet.css
+# build do módulo nitro_fan
+system/kmod/*.ko
+system/kmod/*.o
+system/kmod/*.mod
+system/kmod/*.mod.c
+system/kmod/.*.cmd
+system/kmod/.cache.mk
+system/kmod/Module.symvers
+system/kmod/modules.order

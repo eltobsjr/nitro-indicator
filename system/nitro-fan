@@ -1,0 +1,11 @@
+#!/bin/sh
+# Modo das ventoinhas do Acer Nitro (módulo nitro_fan, WMI gaming 0x0E). Chamado pela extensão Nitro via pkexec.
+# Uso: nitro-fan auto|max|status
+f=/sys/kernel/nitro_fan/mode
+[ -e "$f" ] || modprobe nitro_fan 2>/dev/null
+[ -e "$f" ] || { echo "módulo nitro_fan não carregado (rode o install.sh)" >&2; exit 4; }
+case "$1" in
+    auto|max) printf '%s' "$1" > "$f" ;;
+    status) cat "$f" ;;
+    *) echo "uso: nitro-fan auto|max|status" >&2; exit 2 ;;
+esac
