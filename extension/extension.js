@@ -38,7 +38,7 @@ const MODES = [
 // Ventoinhas: o módulo nitro_fan (system/kmod) fala com a BIOS pelo mesmo comando WMI do NitroSense.
 const FANS = [
     {id: 'auto', label: 'Automático', icon: 'weather-windy-symbolic', cls: 'balanced'},
-    {id: 'max', label: 'Máximo', icon: 'weather-storm-symbolic', cls: 'perf'},
+    {id: 'max', label: 'Máximo', icon: 'weather-storm-symbolic', cls: 'turbo'},
 ];
 
 // O gamemoded avisa por D-Bus (ClientCount) quando um jogo abre e fecha
@@ -131,7 +131,6 @@ class Indicator extends PanelMenu.Button {
     _init(ext) {
         super._init(0.5, 'Nitro');
         this._ext = ext;
-        this._iconDir = `${ext.path}/icons`;
         this._acer = findHwmon('acer');
         this._core = findHwmon('coretemp');
         this._nvidia = findNvidia();
@@ -160,10 +159,6 @@ class Indicator extends PanelMenu.Button {
         this._refreshPanel();
     }
 
-    _fileIcon(name) {
-        return Gio.FileIcon.new(Gio.File.new_for_path(`${this._iconDir}/nitro-${name}-symbolic.svg`));
-    }
-
     _container(styleClass) {
         const item = new PopupMenu.PopupBaseMenuItem({reactive: false, can_focus: false, style_class: styleClass});
         this.menu.addMenuItem(item);
@@ -186,19 +181,13 @@ class Indicator extends PanelMenu.Button {
         head.add_child(this._pill);
         this._container('nitro-item').add_child(head);
 
-        // ---- seletor de modo ----
-        const grid = new St.BoxLayout({style_class: 'nitro-modes', x_expand: true});
-        this._tiles = new Map();
-        for (const m of this._modes) {
-            const inner = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
-            inner.add_child(new St.Icon({icon_name: m.icon, icon_size: 20, style_class: 'nitro-mode-icon', x_align: Clutter.ActorAlign.CENTER}));
-            inner.add_child(new St.Label({text: m.label, style_class: 'nitro-mode-label', x_align: Clutter.ActorAlign.CENTER}));
-            const tile = new St.Button({style_class: `nitro-mode nitro-${m.cls}`, child: inner, x_expand: true, can_focus: true});
-            tile.connect('clicked', () => this._apply(m.id, true));
-            grid.add_child(tile);
-            this._tiles.set(m.id, tile);
-        }
-        this._container('nitro-item').add_child(grid);
+        // ---- perfil ----
+        const profile = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
+        profile.add_child(new St.Label({text: 'Perfil', style_class: 'nitro-section-title'}));
+        const seg = this._segmented(this._modes, id => this._apply(id, true), false);
+        this._tiles = seg.tiles;
+        profile.add_child(seg.rail);
+        this._container('nitro-item').add_child(profile);
 
         this._error = new St.Label({style_class: 'nitro-error', visible: false});
         this._error.clutter_text.line_wrap = true;
@@ -206,22 +195,34 @@ class Indicator extends PanelMenu.Button {
 
         // ---- ventoinhas ----
         const fan = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
-        fan.add_child(new St.Label({text: 'Ventoinhas', style_class: 'nitro-section-title'}));
-        const fanGrid = new St.BoxLayout({style_class: 'nitro-modes', x_expand: true});
-        this._fanTiles = new Map();
-        for (const f of FANS) {
-            const inner = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
-            inner.add_child(new St.Icon({icon_name: f.icon, icon_size: 20, style_class: 'nitro-mode-icon', x_align: Clutter.ActorAlign.CENTER}));
-            inner.add_child(new St.Label({text: f.label, style_class: 'nitro-mode-label', x_align: Clutter.ActorAlign.CENTER}));
-            const tile = new St.Button({style_class: `nitro-mode nitro-${f.cls}`, child: inner, x_expand: true, can_focus: true});
-            tile.connect('clicked', () => this._setFan(f.id));
-            fanGrid.add_child(tile);
-            this._fanTiles.set(f.id, tile);
-        }
-        fan.add_child(fanGrid);
-        this._fanNote = new St.Label({style_class: 'nitro-sub'});
-        fan.add_child(this._fanNote);
+        const fanHead = new St.BoxLayout({x_expand: true});
+        fanHead.add_child(new St.Label({text: 'Ventoinhas', style_class: 'nitro-section-title', x_expand: true}));
+        this._fanNote = new St.Label({style_class: 'nitro-note', y_align: Clutter.ActorAlign.CENTER});
+        fanHead.add_child(this._fanNote);
+        fan.add_child(fanHead);
+        const fanSeg = this._segmented(FANS, id => this._setFan(id), true);
+        this._fanTiles = fanSeg.tiles;
+        fan.add_child(fanSeg.rail);
+        this._fanWarn = new St.Label({style_class: 'nitro-sub', visible: false});
+        fan.add_child(this._fanWarn);
         this._container('nitro-item').add_child(fan);
+
+        // ---- sensores ----
+        const sensors = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
+        sensors.add_child(new St.Label({text: 'Sensores', style_class: 'nitro-section-title'}));
+        const grid = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-tiles', x_expand: true});
+        this._rows = {};
+        for (const pair of [[['cpu', 'CPU'], ['gpu', 'GPU']], [['fan1', 'Ventoinha 1'], ['fan2', 'Ventoinha 2']]]) {
+            const line = new St.BoxLayout({style_class: 'nitro-tiles', x_expand: true});
+            line.layout_manager.homogeneous = true;
+            for (const [key, name] of pair) {
+                this._rows[key] = this._tile(name);
+                line.add_child(this._rows[key].actor);
+            }
+            grid.add_child(line);
+        }
+        sensors.add_child(grid);
+        this._container('nitro-item').add_child(sensors);
 
         // ---- modos (Gamer e os que o usuário criar) ----
         this._modesSection = new ModesSection({
@@ -231,21 +232,10 @@ class Indicator extends PanelMenu.Button {
         });
         this._container('nitro-item').add_child(this._modesSection.actor);
 
-        // ---- sensores ----
-        const sensors = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-section', x_expand: true});
-        sensors.add_child(new St.Label({text: 'Sensores', style_class: 'nitro-section-title'}));
-        this._rows = {
-            cpu: this._row(sensors, 'cpu', 'CPU'),
-            gpu: this._row(sensors, 'gpu', 'GPU'),
-            fan1: this._row(sensors, 'fan', 'Ventoinha 1'),
-            fan2: this._row(sensors, 'fan', 'Ventoinha 2'),
-        };
-        this._container('nitro-item').add_child(sensors);
-
         // ---- GPU ----
         const gpu = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-section nitro-gpu', x_expand: true});
         const gpuHead = new St.BoxLayout({style_class: 'nitro-gpu-head'});
-        this._gpuTitle = new St.Label({text: 'GPU NVIDIA', style_class: 'nitro-section-title', x_expand: true});
+        this._gpuTitle = new St.Label({text: 'GPU NVIDIA', style_class: 'nitro-gpu-name', x_expand: true, y_align: Clutter.ActorAlign.CENTER});
         gpuHead.add_child(this._gpuTitle);
         this._gpuState = new St.Label({style_class: 'nitro-gpu-state'});
         gpuHead.add_child(this._gpuState);
@@ -263,24 +253,49 @@ class Indicator extends PanelMenu.Button {
         this._container('nitro-item').add_child(gpu);
     }
 
-    _row(parent, icon, name) {
-        const row = new St.BoxLayout({style_class: 'nitro-row', x_expand: true});
-        row.add_child(new St.Icon({gicon: this._fileIcon(icon), icon_size: 14, style_class: 'nitro-row-icon', y_align: Clutter.ActorAlign.CENTER}));
-        row.add_child(new St.Label({text: name, style_class: 'nitro-row-name', x_expand: true, y_align: Clutter.ActorAlign.CENTER}));
-        const track = new St.Widget({style_class: 'nitro-track', layout_manager: new Clutter.BinLayout(), y_align: Clutter.ActorAlign.CENTER});
-        const fill = new St.Widget({style_class: 'nitro-fill nitro-idle', x_align: Clutter.ActorAlign.START, y_expand: true});
-        track.add_child(fill);
-        row.add_child(track);
-        const value = new St.Label({style_class: 'nitro-row-value', y_align: Clutter.ActorAlign.CENTER});
-        row.add_child(value);
-        parent.add_child(row);
-        return {fill, value};
+    // Trilho segmentado: só o item marcado (:checked) ganha a cor do token. horizontal = ícone ao lado do texto
+    _segmented(items, onPick, horizontal) {
+        const rail = new St.BoxLayout({style_class: 'nitro-seg', x_expand: true});
+        rail.layout_manager.homogeneous = true;
+        const tiles = new Map();
+        for (const it of items) {
+            const inner = new St.BoxLayout({
+                orientation: horizontal ? Clutter.Orientation.HORIZONTAL : Clutter.Orientation.VERTICAL,
+                style_class: horizontal ? 'nitro-seg-inline' : 'nitro-seg-stack',
+                x_expand: true, x_align: Clutter.ActorAlign.CENTER,
+            });
+            inner.add_child(new St.Icon({icon_name: it.icon, icon_size: 18, style_class: 'nitro-seg-icon', x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.CENTER}));
+            inner.add_child(new St.Label({text: it.label, style_class: 'nitro-seg-label', x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.CENTER}));
+            const tile = new St.Button({style_class: `nitro-seg-btn nitro-${it.cls}`, child: inner, x_expand: true, can_focus: true});
+            tile.connect('clicked', () => onPick(it.id));
+            rail.add_child(tile);
+            tiles.set(it.id, tile);
+        }
+        return {rail, tiles};
     }
 
-    _setRow(row, frac, text, cls) {
-        row.fill.width = Math.round(Math.max(0, Math.min(1, frac)) * TRACK_W);
+    // Peça de sensor: nome, número grande com unidade e barra fina
+    _tile(name) {
+        const box = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-tile', x_expand: true});
+        box.add_child(new St.Label({text: name, style_class: 'nitro-tile-name'}));
+        const line = new St.BoxLayout({style_class: 'nitro-tile-line'});
+        const value = new St.Label({style_class: 'nitro-tile-value', y_align: Clutter.ActorAlign.END});
+        const unit = new St.Label({style_class: 'nitro-tile-unit', y_align: Clutter.ActorAlign.END});
+        line.add_child(value);
+        line.add_child(unit);
+        box.add_child(line);
+        const track = new St.Widget({style_class: 'nitro-track', layout_manager: new Clutter.BinLayout(), x_expand: true});
+        const fill = new St.Widget({style_class: 'nitro-fill nitro-idle', x_align: Clutter.ActorAlign.START, y_expand: true});
+        track.add_child(fill);
+        box.add_child(track);
+        return {actor: box, track, fill, value, unit};
+    }
+
+    _setRow(row, frac, value, unit, cls) {
+        row.fill.width = Math.round(Math.max(0, Math.min(1, frac)) * (row.track.get_width() || TRACK_W));
         row.fill.style_class = `nitro-fill ${cls}`;
-        row.value.text = text;
+        row.value.text = value;
+        row.unit.text = unit;
     }
 
     // ---- leitura ----
@@ -345,11 +360,11 @@ class Indicator extends PanelMenu.Button {
         this._renderFan(ac);
 
         const cpu = this._cpuTemp();
-        this._setRow(this._rows.cpu, (cpu ?? 0) / 100, cpu === null ? '—' : `${cpu} °C`, level(cpu, 75, 90));
+        this._setRow(this._rows.cpu, (cpu ?? 0) / 100, cpu === null ? '—' : `${cpu}`, cpu === null ? '' : '°C', level(cpu, 75, 90));
 
         for (const k of ['fan1', 'fan2']) {
             const rpm = this._acer ? readInt(`${this._acer}/${k}_input`) : null;
-            this._setRow(this._rows[k], (rpm ?? 0) / FAN_MAX_RPM, rpm === null ? '—' : `${rpm} rpm`,
+            this._setRow(this._rows[k], (rpm ?? 0) / FAN_MAX_RPM, rpm === null ? '—' : `${rpm}`, rpm === null ? '' : 'rpm',
                 rpm === null ? 'nitro-idle' : rpm === 0 ? 'nitro-idle' : 'nitro-fan');
         }
 
@@ -401,14 +416,14 @@ class Indicator extends PanelMenu.Button {
         this._chips.visible = active && !!g;
         this._gpuIdle.visible = !active;
         if (active && g) {
-            this._setRow(this._rows.gpu, g.temp / 100, `${Math.round(g.temp)} °C`, level(g.temp, 75, 87));
+            this._setRow(this._rows.gpu, g.temp / 100, `${Math.round(g.temp)}`, '°C', level(g.temp, 75, 87));
             this._chip.power.text = `${Math.round(g.power)} W`;
             this._chip.clock.text = `${Math.round(g.clock)} MHz`;
             this._chip.vram.text = `VRAM ${(g.used / 1024).toFixed(1)}/${(g.total / 1024).toFixed(0)} GB`;
             this._chip.util.text = `Uso ${Math.round(g.util)}%`;
             this._chip.vram.style_class = `nitro-chip ${g.used / g.total > 0.9 ? 'nitro-chip-hot' : ''}`;
         } else if (!active) {
-            this._setRow(this._rows.gpu, 0, 'zzz', 'nitro-idle');
+            this._setRow(this._rows.gpu, 0, 'zzz', '', 'nitro-idle');
         }
     }
 
@@ -479,9 +494,10 @@ class Indicator extends PanelMenu.Button {
             else
                 tile.remove_style_pseudo_class('checked');
         }
-        this._fanNote.text = ok
-            ? (cur === 'unknown' && !this._fan ? 'A BIOS controla (padrão)' : 'Controle manual ativo')
-            : 'Módulo nitro_fan não carregado — rode ./install.sh';
+        const shown = cur === 'unknown' ? this._fan : cur;
+        this._fanNote.text = ok ? (shown === 'max' ? 'Rotação máxima fixa' : 'BIOS no controle') : '';
+        this._fanWarn.text = 'Módulo nitro_fan não carregado — rode ./install.sh';
+        this._fanWarn.visible = !ok;
     }
 
     _setFan(id) {

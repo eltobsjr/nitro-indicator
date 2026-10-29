@@ -57,6 +57,7 @@ números em destaque. Números que mudam usam `font-feature-settings: "tnum"`.
 - `*-head`: avatar ou ícone, título (800) e subtítulo (`subtext0`), pílula de estado à direita.
 - `*-pill`: texto 0.72em/700, raio 100, fundo do token a 0,18.
 - `*-section`: fundo `surface0` a 0,45, raio 12, título de seção em `lavender`.
+- `*-seg` / `*-seg-btn`: seletor segmentado (trilho `surface0` a 0,45, raio 12; item raio 8). Só o item `:checked` recebe a cor do token (fundo 0,2, borda 0,55, texto cheio).
 - `*-track` / `*-fill`: altura 6–8 px, raio 100, trilho `overlay1` a 0,22.
 - `*-btn`: `surface0`, hover `surface1`, foco com anel de 2 px no acento.
 - Botão principal: fundo acento, texto `base`, hover `lavender`.

@@ -12,7 +12,7 @@
 
 /* ---- menu ---- */
 .nitro-menu { min-width: 340px; padding: 6px 0; }
-.nitro-item { padding: 0 14px; }
+.nitro-item { padding: 0 14px 12px; }
 .nitro-item:hover, .nitro-item:focus { background-color: transparent; }
 
 /* cartão do topo */
@@ -45,25 +45,27 @@
 .nitro-pill.nitro-perf { background-color: rgba({{peach.rgb}}, 0.2); color: {{peach}}; }
 .nitro-pill.nitro-turbo { background-color: rgba({{red.rgb}}, 0.2); color: {{red}}; }
 
-/* seletor de modo */
-.nitro-modes { spacing: 6px; padding-bottom: 10px; }
-.nitro-mode {
-    padding: 10px 4px 8px;
-    border-radius: 12px;
-    background-color: rgba({{surface0.rgb}}, 0.7);
+/* seletor segmentado: o trilho é um fundo de seção, só o item marcado recebe a cor do token */
+.nitro-seg { spacing: 4px; padding: 4px; border-radius: 12px; background-color: rgba({{surface0.rgb}}, 0.45); }
+.nitro-seg-btn {
+    padding: 9px 2px 7px;
+    border-radius: 8px;
     color: {{subtext0}};
     border: 1px solid transparent;
     transition-duration: 140ms;
 }
-.nitro-mode:hover { background-color: {{surface1}}; color: {{text}}; }
-.nitro-mode:focus { border-color: rgba({{text.rgb}}, 0.5); }
-.nitro-mode-icon { padding-bottom: 5px; }
-.nitro-mode-label { font-size: 0.76em; font-weight: 700; }
+.nitro-seg-btn:hover { background-color: {{surface1}}; color: {{text}}; }
+.nitro-seg-btn:focus { border-color: {{accent}}; }
+.nitro-seg-stack { spacing: 5px; }
+.nitro-seg-inline { spacing: 8px; padding: 2px 0; }
+.nitro-seg-label { font-size: 0.76em; font-weight: 700; }
+.nitro-seg-inline .nitro-seg-label { font-size: 0.86em; }
 
-.nitro-mode.nitro-eco:checked { background-color: rgba({{green.rgb}}, 0.2); border-color: rgba({{green.rgb}}, 0.55); color: {{green}}; }
-.nitro-mode.nitro-quiet:checked { background-color: rgba({{teal.rgb}}, 0.2); border-color: rgba({{teal.rgb}}, 0.55); color: {{teal}}; }
-.nitro-mode.nitro-balanced:checked { background-color: rgba({{blue.rgb}}, 0.2); border-color: rgba({{blue.rgb}}, 0.55); color: {{blue}}; }
-.nitro-mode.nitro-perf:checked { background-color: rgba({{peach.rgb}}, 0.22); border-color: rgba({{peach.rgb}}, 0.6); color: {{peach}}; }
+.nitro-seg-btn.nitro-eco:checked { background-color: rgba({{green.rgb}}, 0.2); border-color: rgba({{green.rgb}}, 0.55); color: {{green}}; }
+.nitro-seg-btn.nitro-quiet:checked { background-color: rgba({{teal.rgb}}, 0.2); border-color: rgba({{teal.rgb}}, 0.55); color: {{teal}}; }
+.nitro-seg-btn.nitro-balanced:checked { background-color: rgba({{blue.rgb}}, 0.2); border-color: rgba({{blue.rgb}}, 0.55); color: {{blue}}; }
+.nitro-seg-btn.nitro-perf:checked { background-color: rgba({{peach.rgb}}, 0.22); border-color: rgba({{peach.rgb}}, 0.6); color: {{peach}}; }
+.nitro-seg-btn.nitro-turbo:checked { background-color: rgba({{red.rgb}}, 0.2); border-color: rgba({{red.rgb}}, 0.55); color: {{red}}; }
 
 .nitro-error-item { padding-bottom: 6px; }
 .nitro-error {
@@ -78,27 +80,23 @@
 .nitro-section {
     spacing: 7px;
     padding: 10px 12px 12px;
-    margin-bottom: 8px;
     border-radius: 12px;
     background-color: rgba({{surface0.rgb}}, 0.45);
 }
-.nitro-section-title { font-weight: 700; font-size: 0.86em; color: {{lavender}}; padding-bottom: 2px; }
+.nitro-section-title { font-weight: 700; font-size: 0.86em; color: {{lavender}}; padding-bottom: 6px; }
+.nitro-note { font-size: 0.82em; color: {{overlay1}}; }
 
-.nitro-row { spacing: 8px; }
-.nitro-row-icon { color: {{overlay1}}; }
-.nitro-row-name { font-size: 0.86em; color: {{text}}; }
-.nitro-row-value {
-    min-width: 66px;
-    text-align: right;
-    font-size: 0.84em;
-    font-weight: 700;
-    font-feature-settings: "tnum";
-    color: {{text}};
-}
+/* sensores: peças em grade 2×2 */
+.nitro-tiles { spacing: 6px; }
+.nitro-tile { padding: 9px 12px 11px; border-radius: 12px; background-color: rgba({{surface0.rgb}}, 0.45); }
+.nitro-tile-name { font-size: 0.82em; color: {{subtext0}}; }
+.nitro-tile-line { spacing: 3px; }
+.nitro-tile-value { font-size: 1.5em; font-weight: 800; font-feature-settings: "tnum"; color: {{text}}; }
+.nitro-tile-unit { font-size: 0.82em; font-weight: 700; color: {{subtext0}}; padding-bottom: 3px; }
 
 .nitro-track {
-    width: 120px;
     height: 6px;
+    margin-top: 7px;
     border-radius: 100px;
     background-color: rgba({{overlay1.rgb}}, 0.22);
 }
@@ -111,6 +109,7 @@
 
 /* GPU */
 .nitro-gpu-head { spacing: 8px; }
+.nitro-gpu-name { font-weight: 700; font-size: 0.86em; color: {{text}}; }
 .nitro-gpu-state {
     font-size: 0.72em;
     font-weight: 800;
@@ -134,9 +133,10 @@
 .nitro-chip-hot { background-color: rgba({{red.rgb}}, 0.18); color: {{red}}; }
 
 /* modos */
-.nitro-moderow-box { spacing: 6px; padding-bottom: 6px; }
 .nitro-moderow {
-    padding: 9px 12px;
+    margin-bottom: 6px;
+    spacing: 4px;
+    padding: 0 6px 0 0;
     border-radius: 12px;
     background-color: rgba({{surface0.rgb}}, 0.7);
     color: {{subtext0}};
@@ -144,16 +144,20 @@
     transition-duration: 140ms;
 }
 .nitro-moderow:hover { background-color: {{surface1}}; color: {{text}}; }
-.nitro-moderow:focus { border-color: rgba({{text.rgb}}, 0.5); }
-.nitro-moderow:checked { background-color: rgba({{peach.rgb}}, 0.22); border-color: rgba({{peach.rgb}}, 0.6); color: {{peach}}; }
+.nitro-moderow:checked { background-color: rgba({{peach.rgb}}, 0.2); border-color: rgba({{peach.rgb}}, 0.55); color: {{peach}}; }
+.nitro-modemain { padding: 9px 0 9px 12px; border-radius: 12px; }
+.nitro-modemain:focus { box-shadow: inset 0 0 0 2px {{accent}}; }
+.nitro-modemain-inner { spacing: 10px; }
+.nitro-radio { width: 12px; height: 12px; border-radius: 100px; border: 2px solid {{overlay1}}; }
+.nitro-radio-dot { width: 6px; height: 6px; border-radius: 100px; background-color: {{peach}}; }
+.nitro-moderow:checked .nitro-radio { border-color: {{peach}}; }
 .nitro-modename { font-weight: 800; font-size: 0.95em; }
 .nitro-modesum { font-size: 0.74em; color: {{overlay1}}; }
 .nitro-moderow:checked .nitro-modesum { color: {{subtext0}}; }
-.nitro-modestate { font-size: 0.72em; font-weight: 800; padding-left: 8px; }
 .nitro-gear {
-    width: 34px;
-    border-radius: 12px;
-    background-color: rgba({{surface0.rgb}}, 0.7);
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     color: {{subtext0}};
 }
 .nitro-gear:hover { background-color: {{surface1}}; color: {{text}}; }
@@ -162,7 +166,6 @@
 .nitro-editor {
     spacing: 6px;
     padding: 10px 12px;
-    margin-bottom: 8px;
     border-radius: 12px;
     background-color: rgba({{surface0.rgb}}, 0.45);
 }
@@ -203,16 +206,16 @@
 .nitro-stepval { min-width: 52px; text-align: center; font-size: 0.84em; font-weight: 700; font-feature-settings: "tnum"; color: {{text}}; }
 .nitro-editor-foot { spacing: 6px; padding-top: 4px; }
 .nitro-addmode {
-    padding: 6px 10px;
+    padding: 7px 10px;
     border-radius: 12px;
-    background-color: rgba({{surface0.rgb}}, 0.7);
+    border: 1px solid {{surface2}};
     color: {{subtext0}};
     font-size: 0.82em;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 8px;
 }
-.nitro-addmode:hover { background-color: {{surface1}}; color: {{text}}; }
+.nitro-addmode:hover { background-color: rgba({{surface0.rgb}}, 0.7); color: {{text}}; }
+.nitro-addmode:focus { border-color: {{accent}}; }
 .nitro-delmode {
     padding: 6px 12px;
     border-radius: 12px;
@@ -220,6 +223,5 @@
     color: {{red}};
     font-size: 0.82em;
     font-weight: 700;
-    margin-bottom: 8px;
 }
 .nitro-delmode:hover { background-color: rgba({{red.rgb}}, 0.26); }

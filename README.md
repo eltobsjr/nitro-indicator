@@ -55,7 +55,10 @@ Se o `acer_wmi` já estiver carregado, ele é recarregado na hora com `predator_
 - **Ícone na barra** com a cor do modo atual + temperatura da CPU (fica vermelha a
   partir de 90 °C).
 - **Cartão do topo**: modo atual e se está na tomada ou na bateria.
-- **Seletor de modo** — os mesmos perfis do NitroSense:
+- Ordem do menu: Perfil, Ventoinhas, Sensores, Modos e GPU. Perfil e Ventoinhas são
+  controles segmentados (só o item ativo recebe cor) e cada grupo tem o mesmo título em
+  lavender.
+- **Perfil** — os mesmos perfis do NitroSense:
 
   | Botão | `platform_profile` |
   |---|---|
@@ -77,10 +80,11 @@ já usar `XF86Launch1`), a extensão simplesmente não reage à tecla e o resto 
 funcionando; esse caso não foi testado. Detalhes e medições em
 [`docs/ENGENHARIA-REVERSA.md`](docs/ENGENHARIA-REVERSA.md).
 - **Ventoinhas**: *Automático* (a BIOS decide) ou *Máximo* (cerca de 7000 rpm, medido). Fica
-  salvo e é reaplicado no login.
+  salvo e é reaplicado no login. A legenda ao lado do título mostra quem controla
+  ("BIOS no controle" ou "Rotação máxima fixa").
 - **Modos**: conjuntos nomeados de ajustes que se ligam e desligam de uma vez. Vêm dois
   prontos, *Gamer* e *Silêncio*; dá para criar, renomear e excluir os seus pela engrenagem
-  de cada modo. Cada modo guarda (ou deixa em "—" para não mexer):
+  de cada linha. O modo ligado fica marcado com o indicador de seleção. Cada modo guarda (ou deixa em "—" para não mexer):
 
   | Ajuste | Opções |
   |---|---|
@@ -99,7 +103,7 @@ funcionando; esse caso não foi testado. Detalhes e medições em
   Como os modos e as ventoinhas funcionam por dentro (e o que foi medido):
   [`docs/VENTOINHAS-E-MODOS.md`](docs/VENTOINHAS-E-MODOS.md).
 - **Sensores**: temperatura da CPU (pacote, `coretemp`), da GPU e RPM das duas
-  ventoinhas, com barras verde/amarelo/vermelho.
+  ventoinhas, em peças 2×2 com o número grande e uma barra verde/amarelo/vermelho.
 - **GeForce RTX 3050**: consumo (W), clock, uso de VRAM (fica vermelho acima de 90 %)
   e uso da GPU. Quando a dGPU está em **repouso** (RTD3), a extensão **não** chama o
   `nvidia-smi` — senão ela acordaria a placa e gastaria bateria à toa.

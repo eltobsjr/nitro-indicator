@@ -146,23 +146,27 @@ export class ModesSection {
 
     _block(m) {
         const box = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
-        const row = new St.BoxLayout({style_class: 'nitro-moderow-box', x_expand: true});
+        // a linha inteira é o "cartão" (fundo, borda, :checked); o botão principal e a engrenagem ficam dentro dele
+        const row = new St.BoxLayout({style_class: 'nitro-moderow', x_expand: true, reactive: true, track_hover: true});
+        const active = this._active === m.id;
+        if (active)
+            row.add_style_pseudo_class('checked');
+
+        const radio = new St.Widget({style_class: 'nitro-radio', layout_manager: new Clutter.BinLayout(), y_align: Clutter.ActorAlign.CENTER});
+        if (active)
+            radio.add_child(new St.Widget({style_class: 'nitro-radio-dot', x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.CENTER, x_expand: true, y_expand: true}));
 
         const info = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true, y_align: Clutter.ActorAlign.CENTER});
         info.add_child(new St.Label({text: m.name, style_class: 'nitro-modename'}));
-        info.add_child(new St.Label({text: summary(m, this._profiles), style_class: 'nitro-modesum'}));
-        const inner = new St.BoxLayout({x_expand: true});
-        inner.add_child(new St.Icon({icon_name: m.icon, icon_size: 18, style_class: 'nitro-mode-icon', y_align: Clutter.ActorAlign.CENTER}));
+        info.add_child(new St.Label({text: this._busy === m.id ? 'Aplicando…' : summary(m, this._profiles), style_class: 'nitro-modesum'}));
+        const inner = new St.BoxLayout({style_class: 'nitro-modemain-inner', x_expand: true});
+        inner.add_child(radio);
         inner.add_child(info);
-        const state = this._busy === m.id ? 'Aplicando…' : this._active === m.id ? 'Ligado' : '';
-        inner.add_child(new St.Label({text: state, style_class: 'nitro-modestate', y_align: Clutter.ActorAlign.CENTER}));
-        const main = new St.Button({style_class: 'nitro-moderow', child: inner, x_expand: true, can_focus: true, reactive: this._busy === null});
-        if (this._active === m.id)
-            main.add_style_pseudo_class('checked');
+        const main = new St.Button({style_class: 'nitro-modemain', child: inner, x_expand: true, can_focus: true, reactive: this._busy === null});
         main.connect('clicked', () => this._onToggle(m.id));
         row.add_child(main);
 
-        const gear = new St.Button({style_class: 'nitro-gear', can_focus: true,
+        const gear = new St.Button({style_class: 'nitro-gear', can_focus: true, y_align: Clutter.ActorAlign.CENTER,
             child: new St.Icon({icon_name: 'emblem-system-symbolic', icon_size: 16})});
         if (this._open === m.id)
             gear.add_style_pseudo_class('checked');
