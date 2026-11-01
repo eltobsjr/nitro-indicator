@@ -228,7 +228,7 @@ T = {
     'Apps using the GPU': 'Apps usando a GPU',
     'System': 'Sistema',
     'Test peripherals': 'Testar periféricos',
-    'Build your menu on a 4-column grid. Drag items from the drawer to the exact cell you want; nothing snaps into place on its own. Click an item to pick its size. Keyboard: arrows move one cell, + and − change the size, Delete takes it out, Enter opens the options. Changes apply right away.': 'Monte o seu menu numa grade de 4 colunas. Arraste os itens da gaveta para a célula exata que quiser; nada se encaixa sozinho. Clique num item para escolher o tamanho. Teclado: setas movem uma célula, + e − trocam o tamanho, Delete tira, Enter abre as opções. As mudanças valem na hora.',
+    'Build your menu on a 4-column grid. Drag items from the drawer to the cell you want; drop on top of another item to swap them or push it down. Click an item to pick its size. Keyboard: arrows move one cell, + and − change the size, Delete takes it out, Enter opens the options. Changes apply right away.': 'Monte o seu menu numa grade de 4 colunas. Arraste os itens da gaveta para a célula que quiser; solte em cima de outro item para trocar os dois ou empurrá-lo para baixo. Clique num item para escolher o tamanho. Teclado: setas movem uma célula, + e − trocam o tamanho, Delete tira, Enter abre as opções. As mudanças valem na hora.',
     'Ready-made layouts': 'Layouts prontos',
     'Space between items': 'Distância entre os itens',
     'Drawer': 'Gaveta',

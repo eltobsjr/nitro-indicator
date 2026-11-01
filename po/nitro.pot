@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 15:07-0300\n"
+"POT-Creation-Date: 2026-11-01 15:42-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -364,10 +364,10 @@ msgstr ""
 
 #: extension/lab.js:458
 msgid ""
-"Build your menu on a 4-column grid. Drag items from the drawer to the exact "
-"cell you want; nothing snaps into place on its own. Click an item to pick "
-"its size. Keyboard: arrows move one cell, + and − change the size, Delete "
-"takes it out, Enter opens the options. Changes apply right away."
+"Build your menu on a 4-column grid. Drag items from the drawer to the cell "
+"you want; drop on top of another item to swap them or push it down. Click an "
+"item to pick its size. Keyboard: arrows move one cell, + and − change the "
+"size, Delete takes it out, Enter opens the options. Changes apply right away."
 msgstr ""
 
 #: extension/lab.js:469
@@ -424,28 +424,28 @@ msgstr ""
 msgid "Take out of the menu"
 msgstr ""
 
-#: extension/lab.js:825
+#: extension/lab.js:823
 msgid "drag to move, click for the size"
 msgstr ""
 
-#: extension/lab.js:877
+#: extension/lab.js:875
 msgid "Drag to the grid or press Enter"
 msgstr ""
 
-#: extension/lab.js:893
+#: extension/lab.js:891
 msgid "Everything is in the menu"
 msgstr ""
 
-#: extension/lab.js:904
+#: extension/lab.js:902
 msgid "icon"
 msgstr ""
 
-#: extension/lab.js:916
+#: extension/lab.js:914
 #, javascript-format
 msgid "%d px: fits your smallest screen (%d px) without scrolling"
 msgstr ""
 
-#: extension/lab.js:917
+#: extension/lab.js:915
 #, javascript-format
 msgid "%d px: %d px more than your smallest screen; the menu will scroll"
 msgstr ""
@@ -492,7 +492,7 @@ msgstr ""
 msgid "One line"
 msgstr ""
 
-#: extension/layout.js:25 extension/layout.js:221
+#: extension/layout.js:25 extension/layout.js:269
 msgid "CPU temperature"
 msgstr ""
 
@@ -509,7 +509,7 @@ msgstr ""
 msgid "Large chart"
 msgstr ""
 
-#: extension/layout.js:27 extension/layout.js:222
+#: extension/layout.js:27 extension/layout.js:270
 msgid "GPU temperature"
 msgstr ""
 
@@ -553,7 +553,7 @@ msgstr ""
 msgid "Accordion"
 msgstr ""
 
-#: extension/layout.js:38 extension/layout.js:223
+#: extension/layout.js:38 extension/layout.js:271
 msgid "Mode on"
 msgstr ""
 
@@ -605,7 +605,7 @@ msgstr ""
 msgid "Two lines"
 msgstr ""
 
-#: extension/layout.js:50 extension/layout.js:199
+#: extension/layout.js:50 extension/layout.js:247
 msgid "Compact"
 msgstr ""
 
@@ -641,75 +641,75 @@ msgstr ""
 msgid "Shortcuts"
 msgstr ""
 
-#: extension/layout.js:196
+#: extension/layout.js:244
 msgid "Classic"
 msgstr ""
 
-#: extension/layout.js:196
+#: extension/layout.js:244
 msgid "The menu you are used to"
 msgstr ""
 
-#: extension/layout.js:199
+#: extension/layout.js:247
 msgid "Classic, smaller: fits a 900 px screen"
 msgstr ""
 
-#: extension/layout.js:203
+#: extension/layout.js:251
 msgid "Control center"
 msgstr ""
 
-#: extension/layout.js:203
+#: extension/layout.js:251
 msgid "Tiles side by side, like a phone"
 msgstr ""
 
-#: extension/layout.js:208
+#: extension/layout.js:256
 msgid "Gamer"
 msgstr ""
 
-#: extension/layout.js:208
+#: extension/layout.js:256
 msgid "Temperatures, GPU and its apps first"
 msgstr ""
 
-#: extension/layout.js:211
+#: extension/layout.js:259
 msgid "Minimal"
 msgstr ""
 
-#: extension/layout.js:211
+#: extension/layout.js:259
 msgid "Just the essentials in two rows"
 msgstr ""
 
-#: extension/layout.js:220
+#: extension/layout.js:268
 msgid "Profile icon"
 msgstr ""
 
-#: extension/layout.js:220
+#: extension/layout.js:268
 msgid "Color of the current profile"
 msgstr ""
 
-#: extension/layout.js:221
+#: extension/layout.js:269
 msgid "Turns red from 90 °C"
 msgstr ""
 
-#: extension/layout.js:222
+#: extension/layout.js:270
 msgid "Only while the GPU is awake"
 msgstr ""
 
-#: extension/layout.js:223
+#: extension/layout.js:271
 msgid "Name of the mode that is on"
 msgstr ""
 
-#: extension/layout.js:224
+#: extension/layout.js:272
 msgid "Fan speed"
 msgstr ""
 
-#: extension/layout.js:224
+#: extension/layout.js:272
 msgid "Fastest fan, in rpm"
 msgstr ""
 
-#: extension/layout.js:225
+#: extension/layout.js:273
 msgid "Power draw"
 msgstr ""
 
-#: extension/layout.js:225
+#: extension/layout.js:273
 msgid "Watts, only on battery"
 msgstr ""
 

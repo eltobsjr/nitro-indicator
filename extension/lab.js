@@ -1,5 +1,5 @@
 // Laboratório de layout (preferências, GTK4): monte o menu numa grade de 4 colunas. Você escolhe a célula de
-// cada item (nada se encaixa sozinho), o tamanho (ladrilhos 1x1…4x2 ou o bloco clássico de largura inteira),
+// cada item (soltar em cima de outro troca os dois ou empurra para baixo), o tamanho (ladrilhos 1x1…4x2 ou o bloco clássico de largura inteira),
 // a distância entre os itens e parte de layouts prontos. Arraste da gaveta para a grade, dentro da grade, ou de
 // volta para a gaveta; clique num item para o tamanho; teclado: setas movem, + e − trocam o tamanho, Delete
 // tira, Enter abre as opções. Grava no GSettings na hora (as regras ficam em layout.js, testadas à parte).
@@ -8,7 +8,7 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import {
-    ITEMS, GROUPS, PRESETS, PANEL_ITEMS, ALL_PANEL, COLS, sizeOf, parseItems, serialize, fits, place, remove, resize,
+    ITEMS, GROUPS, PRESETS, PANEL_ITEMS, ALL_PANEL, COLS, sizeOf, parseItems, serialize, drop, remove, resize,
     firstFree, cleanPanel,
 } from './layout.js';
 
@@ -455,7 +455,7 @@ export function buildLab(page, settings, _, Adw) {
 
     // ---- estrutura ----
     const intro = new Adw.PreferencesGroup({description:
-        _('Build your menu on a 4-column grid. Drag items from the drawer to the exact cell you want; nothing snaps into place on its own. Click an item to pick its size. Keyboard: arrows move one cell, + and − change the size, Delete takes it out, Enter opens the options. Changes apply right away.')});
+        _('Build your menu on a 4-column grid. Drag items from the drawer to the cell you want; drop on top of another item to swap them or push it down. Click an item to pick its size. Keyboard: arrows move one cell, + and − change the size, Delete takes it out, Enter opens the options. Changes apply right away.')});
     page.add(intro);
     const group = new Adw.PreferencesGroup();
     page.add(group);
@@ -656,7 +656,8 @@ export function buildLab(page, settings, _, Adw) {
         const offY = drag.from === 'drawer' ? geo.cell / 2 : drag.offY;
         const {r, c} = cellAt(geo, x - (sz.auto ? 0 : offX), y - offY + 12, sz);
         const item = {id: drag.id, size: sz.key, r, c};
-        return {item, ok: fits(items(), item)};
+        const next = drop(items(), item);
+        return {item, next, ok: !!next};
     };
     canvasDrop.connect('motion', (_t, x, y) => {
         if (!drag || drag.kind !== 'item')
@@ -673,11 +674,8 @@ export function buildLab(page, settings, _, Adw) {
     canvasDrop.connect('drop', (_t, _v, x, y) => {
         if (!drag || drag.kind !== 'item')
             return false;
-        const {item, ok} = candidate(x, y);
+        const {next} = candidate(x, y);
         clearTarget();
-        if (!ok)
-            return false;
-        const next = place(items(), item);
         if (next)
             save(next);
         return !!next;
@@ -699,7 +697,7 @@ export function buildLab(page, settings, _, Adw) {
         k.connect('key-pressed', (_c, keyval) => {
             const item = getItem();
             const list = items();
-            const moveBy = (dr, dc) => place(list, {...item, r: item.r + dr, c: sizeOf(item.id, item.size).auto ? 0 : item.c + dc});
+            const moveBy = (dr, dc) => drop(list, {...item, r: item.r + dr, c: sizeOf(item.id, item.size).auto ? 0 : item.c + dc});
             let next = null;
             if (keyval === Gdk.KEY_Up)
                 next = moveBy(-1, 0);

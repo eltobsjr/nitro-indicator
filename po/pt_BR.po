@@ -354,8 +354,8 @@ msgid "Preferences"
 msgstr "Preferências"
 
 #: extension/lab.js:458
-msgid "Build your menu on a 4-column grid. Drag items from the drawer to the exact cell you want; nothing snaps into place on its own. Click an item to pick its size. Keyboard: arrows move one cell, + and − change the size, Delete takes it out, Enter opens the options. Changes apply right away."
-msgstr "Monte o seu menu numa grade de 4 colunas. Arraste os itens da gaveta para a célula exata que quiser; nada se encaixa sozinho. Clique num item para escolher o tamanho. Teclado: setas movem uma célula, + e − trocam o tamanho, Delete tira, Enter abre as opções. As mudanças valem na hora."
+msgid "Build your menu on a 4-column grid. Drag items from the drawer to the cell you want; drop on top of another item to swap them or push it down. Click an item to pick its size. Keyboard: arrows move one cell, + and − change the size, Delete takes it out, Enter opens the options. Changes apply right away."
+msgstr "Monte o seu menu numa grade de 4 colunas. Arraste os itens da gaveta para a célula que quiser; solte em cima de outro item para trocar os dois ou empurrá-lo para baixo. Clique num item para escolher o tamanho. Teclado: setas movem uma célula, + e − trocam o tamanho, Delete tira, Enter abre as opções. As mudanças valem na hora."
 
 #: extension/lab.js:469
 msgid "Ready-made layouts"
@@ -409,28 +409,28 @@ msgstr "Mostrar o título"
 msgid "Take out of the menu"
 msgstr "Tirar do menu"
 
-#: extension/lab.js:825
+#: extension/lab.js:823
 msgid "drag to move, click for the size"
 msgstr "arraste para mover, clique para o tamanho"
 
-#: extension/lab.js:877
+#: extension/lab.js:875
 msgid "Drag to the grid or press Enter"
 msgstr "Arraste para a grade ou aperte Enter"
 
-#: extension/lab.js:893
+#: extension/lab.js:891
 msgid "Everything is in the menu"
 msgstr "Tudo está no menu"
 
-#: extension/lab.js:904
+#: extension/lab.js:902
 msgid "icon"
 msgstr "ícone"
 
-#: extension/lab.js:916
+#: extension/lab.js:914
 #, javascript-format
 msgid "%d px: fits your smallest screen (%d px) without scrolling"
 msgstr "%d px: cabe na sua menor tela (%d px) sem rolar"
 
-#: extension/lab.js:917
+#: extension/lab.js:915
 #, javascript-format
 msgid "%d px: %d px more than your smallest screen; the menu will scroll"
 msgstr "%d px: %d px a mais que a sua menor tela; o menu vai rolar"
@@ -477,7 +477,7 @@ msgstr "Blocos 2 × 2"
 msgid "One line"
 msgstr "Uma linha"
 
-#: extension/layout.js:25 extension/layout.js:221
+#: extension/layout.js:25 extension/layout.js:269
 msgid "CPU temperature"
 msgstr "Temperatura da CPU"
 
@@ -494,7 +494,7 @@ msgstr "Número e gráfico"
 msgid "Large chart"
 msgstr "Gráfico grande"
 
-#: extension/layout.js:27 extension/layout.js:222
+#: extension/layout.js:27 extension/layout.js:270
 msgid "GPU temperature"
 msgstr "Temperatura da GPU"
 
@@ -538,7 +538,7 @@ msgstr "Grande"
 msgid "Accordion"
 msgstr "Acordeão"
 
-#: extension/layout.js:38 extension/layout.js:223
+#: extension/layout.js:38 extension/layout.js:271
 msgid "Mode on"
 msgstr "Modo ligado"
 
@@ -590,7 +590,7 @@ msgstr "Selos"
 msgid "Two lines"
 msgstr "Duas linhas"
 
-#: extension/layout.js:50 extension/layout.js:199
+#: extension/layout.js:50 extension/layout.js:247
 msgid "Compact"
 msgstr "Compacto"
 
@@ -626,75 +626,75 @@ msgstr "Painéis"
 msgid "Shortcuts"
 msgstr "Atalhos"
 
-#: extension/layout.js:196
+#: extension/layout.js:244
 msgid "Classic"
 msgstr "Clássico"
 
-#: extension/layout.js:196
+#: extension/layout.js:244
 msgid "The menu you are used to"
 msgstr "O menu com que você está acostumado"
 
-#: extension/layout.js:199
+#: extension/layout.js:247
 msgid "Classic, smaller: fits a 900 px screen"
 msgstr "O clássico, menor: cabe numa tela de 900 px"
 
-#: extension/layout.js:203
+#: extension/layout.js:251
 msgid "Control center"
 msgstr "Central de controle"
 
-#: extension/layout.js:203
+#: extension/layout.js:251
 msgid "Tiles side by side, like a phone"
 msgstr "Ladrilhos lado a lado, como num celular"
 
-#: extension/layout.js:208
+#: extension/layout.js:256
 msgid "Gamer"
 msgstr "Gamer"
 
-#: extension/layout.js:208
+#: extension/layout.js:256
 msgid "Temperatures, GPU and its apps first"
 msgstr "Temperaturas, GPU e os apps dela primeiro"
 
-#: extension/layout.js:211
+#: extension/layout.js:259
 msgid "Minimal"
 msgstr "Mínimo"
 
-#: extension/layout.js:211
+#: extension/layout.js:259
 msgid "Just the essentials in two rows"
 msgstr "Só o essencial, em duas linhas"
 
-#: extension/layout.js:220
+#: extension/layout.js:268
 msgid "Profile icon"
 msgstr "Ícone do perfil"
 
-#: extension/layout.js:220
+#: extension/layout.js:268
 msgid "Color of the current profile"
 msgstr "Na cor do perfil atual"
 
-#: extension/layout.js:221
+#: extension/layout.js:269
 msgid "Turns red from 90 °C"
 msgstr "Fica vermelha a partir de 90 °C"
 
-#: extension/layout.js:222
+#: extension/layout.js:270
 msgid "Only while the GPU is awake"
 msgstr "Só com a GPU acordada"
 
-#: extension/layout.js:223
+#: extension/layout.js:271
 msgid "Name of the mode that is on"
 msgstr "Nome do modo ligado"
 
-#: extension/layout.js:224
+#: extension/layout.js:272
 msgid "Fan speed"
 msgstr "Rotação das ventoinhas"
 
-#: extension/layout.js:224
+#: extension/layout.js:272
 msgid "Fastest fan, in rpm"
 msgstr "A ventoinha mais rápida, em rpm"
 
-#: extension/layout.js:225
+#: extension/layout.js:273
 msgid "Power draw"
 msgstr "Consumo"
 
-#: extension/layout.js:225
+#: extension/layout.js:273
 msgid "Watts, only on battery"
 msgstr "Watts, só na bateria"
 

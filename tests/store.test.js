@@ -164,4 +164,29 @@ eq('gap padrão do schema = DEFAULT_GAP', Number(schema.match(/name="grid-gap"[^
 eq('barra: limpa ids e repetidos', layout.cleanPanel(['cpu', 'x', 'cpu', 'mode']), ['cpu', 'mode']);
 eq('todo item tem tamanho válido', layout.ALL_IDS.every(id => layout.sizeOf(id, 'nada') !== null), true);
 
+// soltar em cima de outro item: troca ou empurra (antes era recusado e não dava para reordenar)
+const ser = list => layout.serialize([...list].sort((a, b) => a.r - b.r || a.c - b.c));
+const classic = layout.DEFAULT_ITEMS;
+eq('soltar bloco em cima de outro: os dois trocam',
+    ser(layout.drop(classic, {id: 'profile', size: 'full', r: 2, c: 0})).slice(0, 3),
+    ['battery:full:0:0', 'fans:full:1:0', 'profile:full:2:0']);
+const tiles = layout.PRESETS(_).find(p => p.id === 'minimal').items;
+eq('soltar ladrilho em cima de outro: trocam de célula',
+    ser(layout.drop(tiles, {id: 'profile', size: '1x1', r: 0, c: 3})).slice(0, 4),
+    ['gputemp:1x1:0:0', 'fans:1x1:0:1', 'cpu:1x1:0:2', 'profile:1x1:0:3']);
+eq('item novo em cima de outro: empurra para baixo',
+    ser(layout.drop(classic, {id: 'hz60', size: 'full', r: 1, c: 0})).slice(0, 3),
+    ['profile:full:0:0', 'hz60:full:1:0', 'fans:full:2:0']);
+eq('bloco largo em cima de vários ladrilhos: todos descem juntos',
+    ser(layout.drop(tiles, {id: 'gpu', size: 'full', r: 0, c: 0})),
+    ['gpu:full:0:0', 'profile:1x1:1:0', 'fans:1x1:1:1', 'cpu:1x1:1:2', 'gputemp:1x1:1:3',
+        'battery:1x1:2:0', 'modes:2x1:2:1', 'prefs:1x1:2:3']);
+eq('mover para o fim não deixa linha vazia',
+    ser(layout.drop(classic, {id: 'profile', size: 'full', r: 9, c: 0}))[0], 'fans:full:0:0');
+eq('fora da grade continua recusado', layout.drop(tiles, {id: 'cpu', size: '1x1', r: 0, c: 4}), null);
+eq('soltar nunca sobrepõe', [classic, tiles].every(base => base.every(it => {
+    const out = layout.drop(base, {...it, r: 1, c: 0});
+    return layout.parseItems(layout.serialize(out)).length === out.length;
+})), true);
+
 System.exit(failed ? 1 : 0);

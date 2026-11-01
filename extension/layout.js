@@ -120,6 +120,54 @@ export function place(items, item) {
 
 export const remove = (items, id) => items.filter(i => i.id !== id);
 
+// Tira as linhas que nenhum item ocupa (no menu elas já somem; aqui só arruma as coordenadas)
+export function compact(items) {
+    const rows = items.reduce((m, i) => Math.max(m, i.r + sizeOf(i.id, i.size).h), 0);
+    const used = new Array(rows).fill(false);
+    for (const i of items)
+        for (let r = i.r; r < i.r + sizeOf(i.id, i.size).h; r++)
+            used[r] = true;
+    const shift = [];
+    let n = 0;
+    for (let r = 0; r < rows; r++) {
+        shift.push(n);
+        if (!used[r])
+            n++;
+    }
+    return items.map(i => ({...i, r: i.r - shift[i.r]}));
+}
+
+// Soltar um item num lugar, mesmo ocupado: se o lugar está livre, vai direto; se só um item está no
+// caminho e cabe onde o arrastado estava, os dois trocam; senão quem está no caminho desce (e quem está
+// abaixo dele também). Devolve a lista nova (sem linhas vazias) ou null se o lugar está fora da grade.
+export function drop(items, item) {
+    const s = sizeOf(item.id, item.size);
+    if (!s || item.r < 0 || item.c < 0 || item.c + s.w > COLS)
+        return null;
+    const direct = place(items, item);
+    if (direct)
+        return compact(direct);
+    const mine = new Set(cells(item));
+    const others = items.filter(i => i.id !== item.id);
+    const hit = others.filter(i => cells(i).some(k => mine.has(k)));
+    const old = items.find(i => i.id === item.id);
+    if (old && hit.length === 1) {
+        const b = hit[0];
+        const moved = {...b, r: old.r, c: sizeOf(b.id, b.size).auto ? 0 : old.c};
+        const rest = others.filter(i => i.id !== b.id);
+        if (fits([...rest, item], moved) && fits([...rest, moved], item))
+            return compact([...rest, item, moved]);
+    }
+    const out = [item];
+    for (const i of [...others].sort((a, b) => a.r - b.r || a.c - b.c)) {
+        let r = i.r;
+        while (!fits(out, {...i, r}) && r < 1000)
+            r++;
+        out.push({...i, r});
+    }
+    return compact(out);
+}
+
 // Troca o tamanho, mantendo o lugar; null se o tamanho novo não couber ali
 export function resize(items, id, size) {
     const it = items.find(i => i.id === id);
