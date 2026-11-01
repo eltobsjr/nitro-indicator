@@ -25,6 +25,8 @@ check() { if [ "$2" = "$3" ]; then echo "  ok    $1"; else echo "  FALHA $1: esp
 
 echo "== nitro_fan"
 load nitro_fan
+# aconteça o que acontecer (até um erro no meio), as ventoinhas voltam para a BIOS
+trap 'echo auto > $F/mode 2>/dev/null || true' EXIT
 echo "antes:          $(rpm)"
 echo max > $F/mode; sleep 6
 echo "max:            $(rpm)"; check "modo max" "$(cat $F/mode)" max
@@ -51,5 +53,8 @@ else
     echo 90 > $T; check "90 vira 80" "$(cat $T)" 80
     echo "$was" > $T; check "volta ao de antes" "$(cat $T)" "$was"
 fi
+
+# o nitro_battery recarregado recria o arquivo do limite: o UPower (e o GNOME) precisa olhar de novo
+systemctl try-restart upower.service || true
 
 [ $fail = 0 ] && echo "TUDO OK" || { echo "HOUVE FALHAS"; exit 1; }
