@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="nitro@eltobsjr.gmail.com">
+  <schema id="org.gnome.shell.extensions.nitro" path="/org/gnome/shell/extensions/nitro/">
+    <key name="panel-gpu-temp" type="b">
+      <default>false</default>
+      <summary>Show the GPU temperature in the top bar</summary>
+      <description>Only while the NVIDIA GPU is awake; it is never woken up just to read it.</description>
+    </key>
+    <key name="show-history" type="b">
+      <default>true</default>
+      <summary>Show the temperature history in the menu</summary>
+    </key>
+    <key name="ac-profile" type="s">
+      <choices>
+        <choice value=""/>
+        <choice value="low-power"/>
+        <choice value="quiet"/>
+        <choice value="balanced"/>
+        <choice value="balanced-performance"/>
+      </choices>
+      <default>''</default>
+      <summary>Profile applied when the charger is plugged in (empty = keep the current one)</summary>
+    </key>
+    <key name="battery-profile" type="s">
+      <choices>
+        <choice value=""/>
+        <choice value="low-power"/>
+        <choice value="quiet"/>
+        <choice value="balanced"/>
+        <choice value="balanced-performance"/>
+      </choices>
+      <default>''</default>
+      <summary>Profile applied when running on battery (empty = keep the current one)</summary>
+    </key>
+    <key name="show-peripherals" type="b">
+      <default>true</default>
+      <summary>Show peripherals in the menu</summary>
+      <description>Controllers, mice and keyboards, wireless battery and the last input; input is only read while the menu is open.</description>
+    </key>
+    <key name="modes-expanded" type="b">
+      <default>false</default>
+      <summary>Modes section expanded in the menu</summary>
+    </key>
+    <key name="peripherals-expanded" type="b">
+      <default>false</default>
+      <summary>Peripherals section expanded in the menu</summary>
+    </key>
+    <key name="turbo-key" type="b">
+      <default>true</default>
+      <summary>Use the NitroSense key to toggle the Performance profile</summary>
+    </key>
+  </schema>
+</schemalist>

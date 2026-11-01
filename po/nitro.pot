@@ -1,0 +1,590 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-01 02:47-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: extension/devices.js:40
+msgid "Laptop keyboard"
+msgstr ""
+
+#: extension/extension.js:42 extension/prefs.js:17
+msgid "Eco"
+msgstr ""
+
+#: extension/extension.js:43 extension/prefs.js:18
+msgid "Quiet"
+msgstr ""
+
+#: extension/extension.js:44 extension/prefs.js:19
+msgid "Balanced"
+msgstr ""
+
+#: extension/extension.js:45 extension/prefs.js:20
+msgid "Performance"
+msgstr ""
+
+#: extension/extension.js:50 extension/prefs.js:193
+msgid "Auto"
+msgstr ""
+
+#: extension/extension.js:51 extension/prefs.js:193
+msgid "Max"
+msgstr ""
+
+#: extension/extension.js:52 extension/prefs.js:193
+msgid "Curve"
+msgstr ""
+
+#: extension/extension.js:184 extension/prefs.js:187
+msgid "Profile"
+msgstr ""
+
+#: extension/extension.js:197 extension/prefs.js:192
+msgid "Fans"
+msgstr ""
+
+#: extension/extension.js:214 extension/extension.js:222
+msgid "Limit charge to 80%"
+msgstr ""
+
+#: extension/extension.js:228
+msgid "Sensors"
+msgstr ""
+
+#: extension/extension.js:231
+msgid "Fan 1"
+msgstr ""
+
+#: extension/extension.js:231
+msgid "Fan 2"
+msgstr ""
+
+#: extension/extension.js:297
+msgid "Sleeping — saving power"
+msgstr ""
+
+#: extension/extension.js:433 extension/prefs.js:88
+msgid "On battery"
+msgstr ""
+
+#: extension/extension.js:433 extension/prefs.js:88
+msgid "Plugged in"
+msgstr ""
+
+#: extension/extension.js:503
+msgid "Active"
+msgstr ""
+
+#: extension/extension.js:503
+msgid "Sleeping"
+msgstr ""
+
+#: extension/extension.js:512
+#, javascript-format
+msgid "Load %s"
+msgstr ""
+
+#: extension/extension.js:536
+#, javascript-format
+msgid "%d–%d °C · last 3 min"
+msgstr ""
+
+#: extension/extension.js:537
+msgid "collecting…"
+msgstr ""
+
+#: extension/extension.js:672 extension/extension.js:767
+#: extension/extension.js:796
+msgid "Authorization cancelled."
+msgstr ""
+
+#: extension/extension.js:672
+#, javascript-format
+msgid "Could not switch to %s"
+msgstr ""
+
+#: extension/extension.js:754
+msgid "Fixed max speed"
+msgstr ""
+
+#: extension/extension.js:754
+msgid "Following the curve"
+msgstr ""
+
+#: extension/extension.js:754
+msgid "Fixed speed"
+msgstr ""
+
+#: extension/extension.js:755
+msgid "BIOS in control"
+msgstr ""
+
+#: extension/extension.js:756
+msgid ""
+"Fan control unavailable: the nitro_fan module is not loaded. Run ./"
+"install.sh again (the kernel may have been updated)."
+msgstr ""
+
+#: extension/extension.js:767
+msgid "Could not change the fans"
+msgstr ""
+
+#: extension/extension.js:787
+msgid "Stops at 80% to extend battery life"
+msgstr ""
+
+#: extension/extension.js:787
+msgid "Charges up to 100%"
+msgstr ""
+
+#: extension/extension.js:796
+msgid "Could not change the charge limit"
+msgstr ""
+
+#: extension/extension.js:811
+msgid "Mode"
+msgstr ""
+
+#: extension/extension.js:811
+msgid "Could not apply the mode."
+msgstr ""
+
+#: extension/extension.js:881
+#, javascript-format
+msgid "%s mode"
+msgstr ""
+
+#: extension/modes.js:28 extension/modes.js:36 extension/prefs.js:122
+#: extension/prefs.js:123
+msgid "Modes"
+msgstr ""
+
+#: extension/modes.js:39
+msgid "Edit modes…"
+msgstr ""
+
+#: extension/modes.js:99 extension/modes.js:123
+msgid "Applying…"
+msgstr ""
+
+#: extension/modes.js:105
+msgid "None on"
+msgstr ""
+
+#: extension/peripherals.js:25
+#, javascript-format
+msgid "Button %d"
+msgstr ""
+
+#: extension/peripherals.js:27
+msgid "left button"
+msgstr ""
+
+#: extension/peripherals.js:27
+msgid "middle button"
+msgstr ""
+
+#: extension/peripherals.js:27
+msgid "right button"
+msgstr ""
+
+#: extension/peripherals.js:27
+msgid "back button"
+msgstr ""
+
+#: extension/peripherals.js:27
+msgid "forward button"
+msgstr ""
+
+#: extension/peripherals.js:190
+msgid "left stick"
+msgstr ""
+
+#: extension/peripherals.js:192
+msgid "right stick"
+msgstr ""
+
+#: extension/peripherals.js:200
+#, javascript-format
+msgid "button %d"
+msgstr ""
+
+#: extension/peripherals.js:209 extension/peripherals.js:661
+msgid "scroll up"
+msgstr ""
+
+#: extension/peripherals.js:209
+msgid "scroll down"
+msgstr ""
+
+#: extension/peripherals.js:210
+msgid "scroll left"
+msgstr ""
+
+#: extension/peripherals.js:210
+msgid "scroll right"
+msgstr ""
+
+#: extension/peripherals.js:251 extension/peripherals.js:257
+msgid "Peripherals"
+msgstr ""
+
+#: extension/peripherals.js:267
+msgid "Test peripherals…"
+msgstr ""
+
+#: extension/peripherals.js:280 extension/peripherals.js:298
+msgid "Press a button on any device"
+msgstr ""
+
+#: extension/peripherals.js:407
+msgid "Peripheral tester"
+msgstr ""
+
+#: extension/peripherals.js:409
+msgid ""
+"Press keys, click, scroll or use a controller. Everything lights up here; "
+"nothing is sent to other apps."
+msgstr ""
+
+#: extension/peripherals.js:417 extension/peripherals.js:653
+#: extension/peripherals.js:664
+msgid "Mouse"
+msgstr ""
+
+#: extension/peripherals.js:418 extension/peripherals.js:597
+msgid "Controller"
+msgstr ""
+
+#: extension/peripherals.js:420 extension/peripherals.js:638
+msgid "Keyboard"
+msgstr ""
+
+#: extension/peripherals.js:425
+msgid "Close"
+msgstr ""
+
+#: extension/peripherals.js:542
+msgid "No controller connected (USB or Bluetooth)."
+msgstr ""
+
+#: extension/prefs.js:66
+msgid "General"
+msgstr ""
+
+#: extension/prefs.js:68
+msgid "Top bar and menu"
+msgstr ""
+
+#: extension/prefs.js:69
+msgid "GPU temperature in the top bar"
+msgstr ""
+
+#: extension/prefs.js:70
+msgid ""
+"Only while the NVIDIA GPU is awake; it is never woken up just to read it"
+msgstr ""
+
+#: extension/prefs.js:73
+msgid "Temperature history"
+msgstr ""
+
+#: extension/prefs.js:73
+msgid "CPU and GPU chart for the last 3 minutes"
+msgstr ""
+
+#: extension/prefs.js:76
+msgid "Peripherals in the menu"
+msgstr ""
+
+#: extension/prefs.js:77
+msgid ""
+"Controllers, mice, keyboards and wireless battery; input is only read while "
+"the menu is open"
+msgstr ""
+
+#: extension/prefs.js:80
+msgid "NitroSense key"
+msgstr ""
+
+#: extension/prefs.js:80
+msgid "Toggles between Performance and the previous profile"
+msgstr ""
+
+#: extension/prefs.js:85
+msgid "Automatic profile"
+msgstr ""
+
+#: extension/prefs.js:86
+msgid "Switch the profile by itself when the charger is plugged in or removed."
+msgstr ""
+
+#: extension/prefs.js:87
+msgid "Keep the current one"
+msgstr ""
+
+#: extension/prefs.js:98
+msgid "System status"
+msgstr ""
+
+#: extension/prefs.js:106
+msgid "Fan control"
+msgstr ""
+
+#: extension/prefs.js:107
+msgid "Through the kernel acer-wmi driver (pwm)"
+msgstr ""
+
+#: extension/prefs.js:107
+msgid "Through the nitro_fan module"
+msgstr ""
+
+#: extension/prefs.js:108
+msgid "Unavailable: run ./install.sh (needs kernel-devel and dkms)"
+msgstr ""
+
+#: extension/prefs.js:109
+msgid "Charge limit"
+msgstr ""
+
+#: extension/prefs.js:109
+msgid "nitro_battery module loaded"
+msgstr ""
+
+#: extension/prefs.js:110
+msgid "Unavailable: nitro_battery module not loaded"
+msgstr ""
+
+#: extension/prefs.js:111
+msgid "Power profiles daemon"
+msgstr ""
+
+#: extension/prefs.js:112
+msgid "Integrated: Quick Settings and this menu stay in sync"
+msgstr ""
+
+#: extension/prefs.js:113
+msgid ""
+"Not integrated: profiles are written directly (run ./install.sh to integrate "
+"tuned-ppd)"
+msgstr ""
+
+#: extension/prefs.js:114
+msgid "Platform profile"
+msgstr ""
+
+#: extension/prefs.js:115
+msgid "acer_wmi without predator_v4: run ./install.sh"
+msgstr ""
+
+#: extension/prefs.js:124
+msgid ""
+"Sets of settings turned on and off together from the menu (or with nitro-"
+"mode on NAME)."
+msgstr ""
+
+#: extension/prefs.js:125
+msgid "New mode"
+msgstr ""
+
+#: extension/prefs.js:139
+msgid "Could not save ~/.config/nitro/modes.json"
+msgstr ""
+
+#: extension/prefs.js:159
+#, javascript-format
+msgid "New mode %d"
+msgstr ""
+
+#: extension/prefs.js:176
+msgid "Name"
+msgstr ""
+
+#: extension/prefs.js:187 extension/prefs.js:193 extension/prefs.js:210
+msgid "Do not change"
+msgstr ""
+
+#: extension/prefs.js:198
+msgid "GPU core offset (MHz)"
+msgstr ""
+
+#: extension/prefs.js:202
+msgid "GPU memory offset (MHz)"
+msgstr ""
+
+#: extension/prefs.js:209
+msgid "GPU overclock"
+msgstr ""
+
+#: extension/prefs.js:210
+msgid "Default"
+msgstr ""
+
+#: extension/prefs.js:210
+msgid "Boost (+100/+500)"
+msgstr ""
+
+#: extension/prefs.js:210
+msgid "Maximum (+150/+1000)"
+msgstr ""
+
+#: extension/prefs.js:210
+msgid "Custom"
+msgstr ""
+
+#: extension/prefs.js:220
+msgid "GPU power limit (W)"
+msgstr ""
+
+#: extension/prefs.js:220
+msgid "0 = do not change. Many laptop drivers do not allow it."
+msgstr ""
+
+#: extension/prefs.js:225
+msgid "CPU in performance"
+msgstr ""
+
+#: extension/prefs.js:225
+msgid "tuned profile nitro-performance"
+msgstr ""
+
+#: extension/prefs.js:229
+msgid "Only when plugged in"
+msgstr ""
+
+#: extension/prefs.js:229
+msgid "Ignored on battery"
+msgstr ""
+
+#: extension/prefs.js:233
+msgid "Turn on when a game starts"
+msgstr ""
+
+#: extension/prefs.js:233
+msgid "Through Feral GameMode; only one mode can have this"
+msgstr ""
+
+#: extension/prefs.js:243
+msgid "Delete mode"
+msgstr ""
+
+#: extension/prefs.js:253 extension/prefs.js:254
+msgid "Fan curve"
+msgstr ""
+
+#: extension/prefs.js:255
+msgid ""
+"Used by the “Curve” fan option. The CPU fan follows the CPU; the GPU fan "
+"follows the hotter of the two. Above 92 °C the fans always go to 100%."
+msgstr ""
+
+#: extension/prefs.js:264
+msgid "Points"
+msgstr ""
+
+#: extension/prefs.js:270
+#, javascript-format
+msgid "Point %d"
+msgstr ""
+
+#: extension/prefs.js:295
+msgid "Save curve"
+msgstr ""
+
+#: extension/prefs.js:299
+msgid "Curve saved"
+msgstr ""
+
+#: extension/prefs.js:299
+msgid "Could not save the curve"
+msgstr ""
+
+#: extension/prefs.js:302
+msgid "Restore default curve"
+msgstr ""
+
+#: extension/store.js:100
+msgid "fans at max"
+msgstr ""
+
+#: extension/store.js:100
+msgid "fan curve"
+msgstr ""
+
+#: extension/store.js:100
+msgid "fans auto"
+msgstr ""
+
+#: extension/store.js:104
+msgid "Boost"
+msgstr ""
+
+#: extension/store.js:104
+msgid "Maximum"
+msgstr ""
+
+#: extension/store.js:108
+msgid "CPU performance"
+msgstr ""
+
+#: extension/store.js:109
+msgid "No changes"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:6
+msgid "Show the GPU temperature in the top bar"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:7
+msgid ""
+"Only while the NVIDIA GPU is awake; it is never woken up just to read it."
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:11
+msgid "Show the temperature history in the menu"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:22
+msgid ""
+"Profile applied when the charger is plugged in (empty = keep the current one)"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:33
+msgid "Profile applied when running on battery (empty = keep the current one)"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:37
+msgid "Show peripherals in the menu"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:38
+msgid ""
+"Controllers, mice and keyboards, wireless battery and the last input; input "
+"is only read while the menu is open."
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:42
+msgid "Modes section expanded in the menu"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:46
+msgid "Peripherals section expanded in the menu"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:50
+msgid "Use the NitroSense key to toggle the Performance profile"
+msgstr ""

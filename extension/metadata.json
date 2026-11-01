@@ -1,12 +1,14 @@
 {
   "uuid": "nitro@eltobsjr.gmail.com",
   "name": "Nitro",
-  "description": "Central estilo NitroSense para o Acer Nitro: modos de desempenho (acer_wmi), ventoinhas, temperaturas e GPU na barra superior.",
-  "version-name": "0.2.0",
+  "description": "NitroSense-style control center for Acer Nitro laptops: performance profiles, fans (auto, max or curve), battery charge limit, temperatures and NVIDIA GPU in the top bar.",
+  "version-name": "0.3.0",
   "shell-version": [
     "48",
     "49",
     "50"
   ],
-  "url": "https://github.com/eltobsjr/nitro-indicator"
+  "url": "https://github.com/eltobsjr/nitro-indicator",
+  "gettext-domain": "nitro@eltobsjr.gmail.com",
+  "settings-schema": "org.gnome.shell.extensions.nitro"
 }

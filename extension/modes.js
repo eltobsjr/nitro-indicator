@@ -1,127 +1,78 @@
-// Modos nomeados do Nitro: leitura/gravação de ~/.config/nitro/modes.json e a seção do menu que os lista e edita.
-// A aplicação em si é do comando nitro-mode (system/nitro-mode); aqui só configuramos e disparamos.
+// Seção "Modos" do menu, em acordeão: fechado é uma linha só (título, o modo ligado em destaque, engrenagem
+// e seta); aberto lista os modos em linhas de uma altura para ligar/desligar. A edição fica nas preferências.
 import Clutter from 'gi://Clutter';
-import GLib from 'gi://GLib';
 import St from 'gi://St';
 
-const CONFIG_FILE = GLib.build_filenamev([GLib.get_user_config_dir(), 'nitro', 'modes.json']);
-const ACTIVE_FILE = GLib.build_filenamev([GLib.get_user_state_dir(), 'nitro', 'mode-active.json']);
-const BOOT_ID_FILE = '/proc/sys/kernel/random/boot_id';
+import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-// Mantenha igual a FIELDS/BUILTIN em system/nitro-mode.
-export const MODE_FIELDS = {
-    profile: 'balanced-performance',
-    fan: 'max',
-    gpu_offset: 'boost',
-    gpu_custom: {gpc: 100, mem: 500},
-    power_limit: null,
-    cpu_performance: true,
-    only_on_ac: true,
-    auto_gamemode: false,
-};
+import {loadModes, summary} from './store.js';
 
-const FAN_CHOICES = [[null, '—'], ['auto', 'Automático'], ['max', 'Máximo']];
-const OFFSET_CHOICES = [[null, '—'], ['off', 'Padrão'], ['boost', 'Boost'], ['max', 'Máximo'], ['custom', 'Livre']];
-const POWER = {min: 30, max: 65, step: 5};   // o helper confere com a faixa real do driver
-const GPC = {min: 0, max: 300, step: 25};    // MHz
-const MEM = {min: 0, max: 1500, step: 100};  // MHz
-const ID_RE = /^[a-z0-9-]{1,32}$/;
-
-function readText(path) {
-    try {
-        const [ok, bytes] = GLib.file_get_contents(path);
-        return ok ? new TextDecoder().decode(bytes).trim() : null;
-    } catch {
-        return null;
-    }
-}
-
-const clone = v => JSON.parse(JSON.stringify(v));
-
-function builtinModes() {
-    return [
-        {id: 'gamer', name: 'Gamer', icon: 'input-gaming-symbolic', ...clone(MODE_FIELDS), auto_gamemode: true},
-        {id: 'silencio', name: 'Silêncio', icon: 'weather-clear-night-symbolic', ...clone(MODE_FIELDS),
-            profile: 'quiet', fan: 'auto', gpu_offset: 'off', cpu_performance: false, only_on_ac: false},
-    ];
-}
-
-export function loadModes() {
-    try {
-        const text = readText(CONFIG_FILE);
-        const list = text ? JSON.parse(text)?.modes : null;
-        if (Array.isArray(list)) {
-            const out = list.filter(m => m && typeof m === 'object' && ID_RE.test(String(m.id)))
-                .map(m => ({...clone(MODE_FIELDS), name: m.id, icon: 'input-gaming-symbolic', ...m}));
-            if (out.length)
-                return out;
-        }
-    } catch {}
-    return builtinModes();
-}
-
-export function saveModes(modes) {
-    try {
-        GLib.mkdir_with_parents(GLib.path_get_dirname(CONFIG_FILE), 0o755);
-        GLib.file_set_contents(CONFIG_FILE, JSON.stringify({modes}, null, 2));
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-// Modo ligado agora; um estado de antes do último boot não vale (o hardware voltou ao padrão)
-export function activeModeId() {
-    try {
-        const st = JSON.parse(readText(ACTIVE_FILE) ?? 'null');
-        return st?.mode && st.boot === readText(BOOT_ID_FILE) ? st.mode : null;
-    } catch {
-        return null;
-    }
-}
-
-function summary(m, profiles) {
-    const parts = [];
-    const prof = profiles.find(p => p.id === m.profile);
-    if (prof)
-        parts.push(prof.label);
-    if (m.fan)
-        parts.push(m.fan === 'max' ? 'ventoinhas no máx.' : 'ventoinhas auto');
-    if (m.gpu_offset === 'custom')
-        parts.push(`GPU +${m.gpu_custom.gpc}/+${m.gpu_custom.mem}`);
-    else if (m.gpu_offset && m.gpu_offset !== 'off')
-        parts.push(`GPU ${OFFSET_CHOICES.find(c => c[0] === m.gpu_offset)?.[1] ?? m.gpu_offset}`);
-    if (m.power_limit)
-        parts.push(`${m.power_limit} W`);
-    if (m.cpu_performance)
-        parts.push('CPU performance');
-    return parts.join(' · ') || 'Sem ajustes';
-}
+const ELLIPSIZE_END = 3;
 
 export class ModesSection {
-    // profiles: [{id, label}] vindos da extensão; onToggle(id) liga/desliga o modo; onError(texto)
-    constructor({profiles, onToggle, onError}) {
+    // profiles: [{id, label}] vindos da extensão; settings: GSettings (modes-expanded);
+    // onToggle(id) liga/desliga; onEdit() abre as preferências
+    constructor({profiles, settings, onToggle, onEdit}) {
         this._profiles = profiles;
+        this._settings = settings;
         this._onToggle = onToggle;
-        this._onError = onError;
-        this._modes = loadModes();
-        this._open = null;
+        this._onEdit = onEdit;
         this._active = null;
         this._busy = null;
-        this.actor = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
-        this._render();
+        this._sig = null;
+        this.actor = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-accordion', x_expand: true});
+
+        // barra do acordeão: a área que abre/fecha e, ao lado, a engrenagem (botões irmãos, não aninhados)
+        const bar = new St.BoxLayout({style_class: 'nitro-accordion-bar', x_expand: true});
+        const head = new St.BoxLayout({style_class: 'nitro-accordion-head', x_expand: true});
+        head.add_child(new St.Label({text: _('Modes'), style_class: 'nitro-accordion-title', y_align: Clutter.ActorAlign.CENTER}));
+        this._current = new St.Label({style_class: 'nitro-mode-pill', y_align: Clutter.ActorAlign.CENTER});
+        this._current.clutter_text.ellipsize = ELLIPSIZE_END;
+        head.add_child(this._current);
+        head.add_child(new St.Widget({x_expand: true}));
+        this._toggle = new St.Button({child: head, style_class: 'nitro-accordion-hit', x_expand: true, can_focus: true,
+            accessible_name: _('Modes')});
+        const flip = () => settings.set_boolean('modes-expanded', !settings.get_boolean('modes-expanded'));
+        this._toggle.connect('clicked', flip);
+        const gear = new St.Button({style_class: 'nitro-gear', can_focus: true, y_align: Clutter.ActorAlign.CENTER,
+            accessible_name: _('Edit modes…'), child: new St.Icon({icon_name: 'emblem-system-symbolic', icon_size: 16})});
+        gear.connect('clicked', () => this._onEdit());
+        // a seta fica na ponta direita, alinhada com a do acordeão de periféricos
+        this._chevron = new St.Icon({icon_size: 14, style_class: 'nitro-accordion-chevron'});
+        const chevron = new St.Button({child: this._chevron, style_class: 'nitro-accordion-chevron-btn', can_focus: true,
+            y_align: Clutter.ActorAlign.CENTER, accessible_name: _('Modes')});
+        chevron.connect('clicked', flip);
+        bar.add_child(this._toggle);
+        bar.add_child(gear);
+        bar.add_child(chevron);
+        this.actor.add_child(bar);
+
+        this._list = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-modelist', x_expand: true});
+        this.actor.add_child(this._list);
+        this._expandedId = settings.connect('changed::modes-expanded', () => this._syncExpanded());
+        this.actor.connect('destroy', () => {
+            if (this._expandedId)
+                settings.disconnect(this._expandedId);
+            this._expandedId = 0;
+        });
+        this._syncExpanded();
+        this.refresh();
+    }
+
+    get active() {
+        return this._active;
     }
 
     setActive(id) {
         if (id === this._active)
             return;
         this._active = id;
-        this._render();
+        this.refresh(true);
     }
 
     setBusy(id) {
         this._busy = id;
-        this._render();
+        this.refresh(true);
     }
 
     // modo marcado para ligar sozinho quando o GameMode registrar um jogo
@@ -129,187 +80,60 @@ export class ModesSection {
         return loadModes().find(m => m.auto_gamemode)?.id ?? null;
     }
 
-    _save() {
-        if (!saveModes(this._modes))
-            this._onError('Não deu pra salvar os modos em ~/.config/nitro/modes.json.');
+    _syncExpanded() {
+        const open = this._settings.get_boolean('modes-expanded');
+        this._list.visible = open;
+        this._chevron.icon_name = open ? 'pan-down-symbolic' : 'pan-end-symbolic';
+        if (open)
+            this.actor.add_style_pseudo_class('checked');
+        else
+            this.actor.remove_style_pseudo_class('checked');
     }
 
-    _render() {
-        this.actor.destroy_all_children();
-        this.actor.add_child(new St.Label({text: 'Modos', style_class: 'nitro-section-title'}));
-        for (const m of this._modes)
-            this.actor.add_child(this._block(m));
-        const add = new St.Button({label: '+ Novo modo', style_class: 'nitro-addmode', x_expand: true, can_focus: true});
-        add.connect('clicked', () => this._add());
-        this.actor.add_child(add);
+    // Só reconstrói quando a lista (ou o estado) mudou: o menu chama isto a cada atualização
+    refresh(force = false) {
+        const modes = loadModes();
+        const sig = JSON.stringify([modes, this._active, this._busy]);
+        if (!force && sig === this._sig)
+            return;
+        this._sig = sig;
+
+        // o modo ligado fica na barra, visível mesmo com o acordeão fechado
+        const active = modes.find(m => m.id === this._active);
+        if (this._busy) {
+            this._current.text = _('Applying…');
+            this._current.style_class = 'nitro-mode-pill nitro-mode-pill-busy';
+        } else if (active) {
+            this._current.text = active.name;
+            this._current.style_class = 'nitro-mode-pill nitro-mode-pill-on';
+        } else {
+            this._current.text = _('None on');
+            this._current.style_class = 'nitro-mode-pill';
+        }
+
+        this._list.destroy_all_children();
+        for (const m of modes)
+            this._list.add_child(this._line(m));
     }
 
-    _block(m) {
-        const box = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true});
-        // a linha inteira é o "cartão" (fundo, borda, :checked); o botão principal e a engrenagem ficam dentro dele
-        const row = new St.BoxLayout({style_class: 'nitro-moderow', x_expand: true, reactive: true, track_hover: true});
+    // Uma linha por modo: bolinha, nome e o resumo cortado no fim
+    _line(m) {
         const active = this._active === m.id;
-        if (active)
-            row.add_style_pseudo_class('checked');
-
+        const inner = new St.BoxLayout({style_class: 'nitro-modeline-inner', x_expand: true});
         const radio = new St.Widget({style_class: 'nitro-radio', layout_manager: new Clutter.BinLayout(), y_align: Clutter.ActorAlign.CENTER});
         if (active)
             radio.add_child(new St.Widget({style_class: 'nitro-radio-dot', x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.CENTER, x_expand: true, y_expand: true}));
-
-        const info = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true, y_align: Clutter.ActorAlign.CENTER});
-        info.add_child(new St.Label({text: m.name, style_class: 'nitro-modename'}));
-        info.add_child(new St.Label({text: this._busy === m.id ? 'Aplicando…' : summary(m, this._profiles), style_class: 'nitro-modesum'}));
-        const inner = new St.BoxLayout({style_class: 'nitro-modemain-inner', x_expand: true});
         inner.add_child(radio);
-        inner.add_child(info);
-        const main = new St.Button({style_class: 'nitro-modemain', child: inner, x_expand: true, can_focus: true, reactive: this._busy === null});
-        main.connect('clicked', () => this._onToggle(m.id));
-        row.add_child(main);
-
-        const gear = new St.Button({style_class: 'nitro-gear', can_focus: true, y_align: Clutter.ActorAlign.CENTER,
-            child: new St.Icon({icon_name: 'emblem-system-symbolic', icon_size: 16})});
-        if (this._open === m.id)
-            gear.add_style_pseudo_class('checked');
-        gear.connect('clicked', () => {
-            this._open = this._open === m.id ? null : m.id;
-            this._render();
-        });
-        row.add_child(gear);
-        box.add_child(row);
-
-        if (this._open === m.id)
-            box.add_child(this._editor(m));
-        return box;
-    }
-
-    _editor(m) {
-        const ed = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, style_class: 'nitro-editor', x_expand: true});
-
-        const entry = new St.Entry({text: m.name, style_class: 'nitro-entry', x_expand: true, can_focus: true});
-        entry.clutter_text.connect('text-changed', () => {
-            const t = entry.get_text().trim();
-            if (t) {
-                m.name = t.slice(0, 24);
-                this._save();
-            }
-        });
-        ed.add_child(this._field('Nome', entry));
-
-        ed.add_child(this._field('Perfil', this._chips(
-            [[null, '—'], ...this._profiles.map(p => [p.id, p.label])], m.profile, v => (m.profile = v))));
-        ed.add_child(this._field('Ventoinhas', this._chips(FAN_CHOICES, m.fan, v => (m.fan = v))));
-
-        const custom = new St.BoxLayout({orientation: Clutter.Orientation.VERTICAL, x_expand: true, visible: m.gpu_offset === 'custom'});
-        custom.add_child(this._field('Núcleo (MHz)', this._stepper(m.gpu_custom.gpc, GPC, false, v => (m.gpu_custom.gpc = v), v => `+${v}`)));
-        custom.add_child(this._field('Memória (MHz)', this._stepper(m.gpu_custom.mem, MEM, false, v => (m.gpu_custom.mem = v), v => `+${v}`)));
-        ed.add_child(this._field('Overclock GPU', this._chips(OFFSET_CHOICES, m.gpu_offset, v => {
-            m.gpu_offset = v;
-            custom.visible = v === 'custom';
-        })));
-        ed.add_child(custom);
-
-        ed.add_child(this._field('Limite GPU (se o driver deixar)', this._stepper(m.power_limit, POWER, true, v => (m.power_limit = v), v => `${v} W`)));
-        ed.add_child(this._field('CPU em performance', this._chips([[false, 'Não'], [true, 'Sim']], m.cpu_performance, v => (m.cpu_performance = v))));
-        ed.add_child(this._field('Só na tomada', this._chips([[false, 'Não'], [true, 'Sim']], m.only_on_ac, v => (m.only_on_ac = v))));
-        ed.add_child(this._field('Ligar ao abrir jogo', this._chips([[false, 'Não'], [true, 'Sim']], m.auto_gamemode, v => {
-            m.auto_gamemode = v;
-            if (v)
-                for (const o of this._modes)
-                    if (o !== m)
-                        o.auto_gamemode = false;
-        })));
-
-        const foot = new St.BoxLayout({style_class: 'nitro-editor-foot', x_expand: true});
-        const done = new St.Button({label: 'Pronto', style_class: 'nitro-addmode', x_expand: true, can_focus: true});
-        done.connect('clicked', () => {
-            this._open = null;
-            this._render();
-        });
-        foot.add_child(done);
-        if (this._modes.length > 1) {
-            const del = new St.Button({label: 'Excluir', style_class: 'nitro-delmode', can_focus: true});
-            del.connect('clicked', () => this._delete(m));
-            foot.add_child(del);
-        }
-        ed.add_child(foot);
-        return ed;
-    }
-
-    _field(label, widget) {
-        const row = new St.BoxLayout({style_class: 'nitro-field', x_expand: true});
-        row.add_child(new St.Label({text: label, style_class: 'nitro-field-name', y_align: Clutter.ActorAlign.CENTER, x_expand: true}));
-        row.add_child(widget);
-        return row;
-    }
-
-    // Botões de escolha única; atualiza os próprios estados sem reconstruir o menu
-    _chips(options, current, onPick) {
-        const box = new St.BoxLayout({style_class: 'nitro-chipbtns'});
-        const buttons = [];
-        const mark = value => buttons.forEach(([v, b]) => {
-            if (v === value)
-                b.add_style_pseudo_class('checked');
-            else
-                b.remove_style_pseudo_class('checked');
-        });
-        for (const [value, label] of options) {
-            const b = new St.Button({label, style_class: 'nitro-chipbtn', can_focus: true});
-            b.connect('clicked', () => {
-                onPick(value);
-                mark(value);
-                this._save();
-            });
-            buttons.push([value, b]);
-            box.add_child(b);
-        }
-        mark(current);
-        return box;
-    }
-
-    // − valor +. Com nullable, descer do mínimo desliga ("—") e subir de "—" volta ao mínimo
-    _stepper(initial, range, nullable, onChange, fmt) {
-        let value = initial;
-        const box = new St.BoxLayout({style_class: 'nitro-stepper'});
-        const label = new St.Label({style_class: 'nitro-stepval', y_align: Clutter.ActorAlign.CENTER});
-        const show = () => (label.text = value === null ? '—' : fmt(value));
-        const step = dir => {
-            if (value === null)
-                value = dir > 0 ? range.min : null;
-            else if (value + dir * range.step < range.min)
-                value = nullable ? null : range.min;
-            else
-                value = Math.min(range.max, value + dir * range.step);
-            onChange(value);
-            show();
-            this._save();
-        };
-        const mk = (text, dir) => {
-            const b = new St.Button({label: text, style_class: 'nitro-stepbtn', can_focus: true});
-            b.connect('clicked', () => step(dir));
-            return b;
-        };
-        box.add_child(mk('−', -1));
-        box.add_child(label);
-        box.add_child(mk('+', 1));
-        show();
-        return box;
-    }
-
-    _add() {
-        let n = 1;
-        while (this._modes.some(m => m.id === `modo-${n}`))
-            n++;
-        const base = this._modes.find(m => m.id === 'gamer') ?? this._modes[0];
-        this._modes.push({...clone(base), id: `modo-${n}`, name: `Novo modo ${n}`, auto_gamemode: false});
-        this._open = `modo-${n}`;
-        this._save();
-        this._render();
-    }
-
-    _delete(m) {
-        this._modes = this._modes.filter(o => o !== m);
-        this._open = null;
-        this._save();
-        this._render();
+        inner.add_child(new St.Label({text: m.name, style_class: 'nitro-modename', y_align: Clutter.ActorAlign.CENTER}));
+        const sum = new St.Label({text: this._busy === m.id ? _('Applying…') : summary(m, this._profiles, _),
+            style_class: 'nitro-modesum', x_expand: true, y_align: Clutter.ActorAlign.CENTER});
+        sum.clutter_text.ellipsize = ELLIPSIZE_END;
+        inner.add_child(sum);
+        const line = new St.Button({style_class: 'nitro-modeline', child: inner, x_expand: true, can_focus: true,
+            reactive: this._busy === null, accessible_name: m.name});
+        if (active)
+            line.add_style_pseudo_class('checked');
+        line.connect('clicked', () => this._onToggle(m.id));
+        return line;
     }
 }

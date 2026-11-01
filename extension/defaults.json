@@ -1,0 +1,17 @@
+{
+  "fields": {
+    "profile": "balanced-performance",
+    "fan": "max",
+    "gpu_offset": "boost",
+    "gpu_custom": {"gpc": 100, "mem": 500},
+    "power_limit": null,
+    "cpu_performance": true,
+    "only_on_ac": true,
+    "auto_gamemode": false
+  },
+  "builtin": [
+    {"id": "gamer", "name": "Gamer", "icon": "input-gaming-symbolic", "auto_gamemode": true},
+    {"id": "silencio", "name": "Silêncio", "icon": "weather-clear-night-symbolic", "profile": "quiet", "fan": "auto",
+     "gpu_offset": "off", "cpu_performance": false, "only_on_ac": false}
+  ]
+}
