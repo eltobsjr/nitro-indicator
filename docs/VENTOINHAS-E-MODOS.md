@@ -37,9 +37,16 @@ a expõe (`pwm`) no ANV15-51. O módulo `system/kmod/nitro_fan.c` repete a mesma
 - GUID WMI gaming `7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56`, método `0x0E`, entrada de 64 bits:
   `bitmap | (modo_cpu << 16) | (modo_gpu << 22)`, com bitmap `0x1` = ventoinha da CPU e `0x8` = da GPU.
 - Modos: `1` automático, `2` máximo ("turbo"), `3` personalizado. O `1` e o `2` foram validados na
-  máquina; o `3` não é usado (falta o comando que define a velocidade).
-- Interface: `/sys/kernel/nitro_fan/mode` (`auto` ou `max`, só root). Ao descarregar o módulo, devolve
-  o controle à BIOS (`auto`).
+  máquina.
+- Velocidade (modo `3`): método `0x10`, entrada `id_ventoinha | (porcentagem << 8)` com id `1` = CPU e
+  `4` = GPU; leitura pelo `0x11`. Os mesmos métodos que o acer-wmi oficial usa no `pwm` do hwmon
+  (fan control, kernel 6.19+; o quirk do ANV15-51 entrou em out/2026). Status `0` = ok, `1` = sem
+  ventoinha, `2` = valor inválido. **Ainda não medido nesta máquina**: rode `sudo system/kmod/teste.sh`.
+- Interface: `/sys/kernel/nitro_fan/mode` (`auto`, `max`, `custom`) e `cpu_speed`/`gpu_speed` (0–100),
+  só root. Ao descarregar o módulo, devolve o controle à BIOS (`auto`).
+- Segurança: só carrega nos modelos da tabela DMI (hoje, o ANV15-51); `force=1` pula a checagem.
+- Quando o kernel tiver o `pwm` no hwmon `acer`, o `nitro-fan` e o `nitro-fancurve` usam ele e o
+  módulo fica sobrando.
 - Medido (ocioso): automático ≈ 2000/1700 RPM; máximo ≈ 7300/7000 RPM em menos de 6 s. Ao voltar para
   automático a rotação cai gradualmente (≈ 5900/5700 RPM seis segundos depois).
 - O que o módulo não sabe: ler o modo atual da BIOS. O arquivo `mode` mostra o último valor escrito
@@ -78,11 +85,11 @@ Campos de um modo (qualquer um pode ficar `null` = "não mexer"):
 | Campo | Valores |
 |---|---|
 | `profile` | `low-power`, `quiet`, `balanced`, `balanced-performance` |
-| `fan` | `auto`, `max` |
+| `fan` | `auto`, `max`, `curve` (serviço `nitro-fancurve`) |
 | `gpu_offset` | `off`, `boost` (+100/+500), `max` (+150/+1000), `custom` (usa `gpu_custom`) |
 | `gpu_custom` | `{"gpc": MHz, "mem": MHz}` |
 | `power_limit` | watts da GPU (hoje recusado pelo driver neste modelo) |
-| `cpu_performance` | `true` = perfil `tuned` `throughput-performance` (governor e EPP em performance) |
+| `cpu_performance` | `true` = perfil `tuned` `nitro-performance` (o `throughput-performance` com o perfil Acer que o firmware aceita; sem a integração, o próprio `throughput-performance`) |
 | `only_on_ac` | `true` = ignora o modo na bateria |
 | `auto_gamemode` | `true` = a extensão liga o modo quando o GameMode registra um jogo (só um modo por vez) |
 
@@ -97,7 +104,9 @@ Comportamento:
   vai para o `stderr` (a extensão mostra no menu). A saída é `1` nesse caso.
 - Execuções simultâneas (extensão e lançador de jogo) são serializadas por um `flock`.
 - O `tuned` reaplica o perfil da Acer ao trocar de perfil, por isso o `nitro-mode` reaplica o perfil
-  depois de ligar o `throughput-performance`.
+  depois de ligar o perfil do `tuned`.
+- Os campos e os modos de fábrica ficam em `extension/defaults.json` (instalado também em
+  `~/.local/share/nitro/defaults.json`): a extensão e o `nitro-mode` leem o mesmo arquivo.
 
 Os helpers de root são pequenos e só aceitam comandos conhecidos (`nitro-profile`, `nitro-fan`,
 `nitro-boost`); a extensão e o `nitro-mode` os chamam por `pkexec`, liberado sem senha só na sessão
@@ -109,10 +118,12 @@ ativa pela regra do polkit.
 |---|---|
 | Perfis, ventoinhas (auto/máx), deslocamentos de GPU, CPU em performance, ligar e desligar um modo | Testado de ponta a ponta na máquina |
 | Extensão carrega e inicia sem erro de JS | Testado em um GNOME Shell isolado (headless) |
-| Interface de edição dos modos (cliques) | Não testada |
+| Interface de edição dos modos (agora nas preferências) | Renderizada e navegada num GNOME Shell headless; edição real não testada |
+| Testes automáticos (`make test`) | `nitro-mode` (liga/desliga/restaura, curva, bateria), curva, `nitro-input`, `store.js`/`utils.js`/`devices.js` no gjs |
 | Estabilidade de +100/+500 MHz em jogo longo | Não testada |
-| Ventoinha em porcentagem, ventoinha da CPU e da GPU separadas | Não feito (o bitmap já permite separar; falta o comando de velocidade) |
-| Limite de carga da bateria, modo da GPU (MUX), RGB do teclado | Não verificado |
+| Ventoinha em porcentagem e curva | Implementado (`nitro_fan` + `nitro-fancurve`); compila; **falta medir no hardware** (`teste.sh`) |
+| Limite de carga da bateria | Implementado (`nitro_battery`, protocolo do acer-wmi-battery, GUID presente nesta máquina); compila; **falta medir no hardware** |
+| Modo da GPU (MUX), RGB do teclado | Não verificado |
 
 ## Fora de escopo
 

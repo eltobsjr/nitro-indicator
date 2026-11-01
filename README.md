@@ -2,9 +2,12 @@
 
 Uma extensão do **GNOME Shell** que faz o papel do **NitroSense** da Acer no Linux,
 direto da barra superior: troca o **modo de desempenho** (Eco, Silencioso,
-Equilibrado, Performance) e mostra **ventoinhas**, **temperaturas** e a **GPU NVIDIA**
-ao vivo. Usa o driver `acer_wmi` do próprio kernel (opção `predator_v4`) — nada de
-módulo de terceiros pra recompilar a cada atualização.
+Equilibrado, Performance), controla as **ventoinhas** (automático, máximo ou **curva por
+temperatura**), liga o **limite de carga da bateria em 80%**, mostra **temperaturas** (com
+histórico), a **GPU NVIDIA** e os **periféricos** (controle, mouse, teclado e bateria dos sem
+fio, com o botão que está sendo apertado) ao vivo. Usa o driver `acer_wmi` do próprio kernel
+(opção `predator_v4`); o que o kernel ainda não tem vem de dois módulos pequenos, recompilados
+sozinhos pelo **DKMS** a cada kernel novo.
 
 Feita e testada num **Acer Nitro V15 (ANV15-51)** com i5-13420H + RTX 3050 6 GB,
 Fedora 44 / GNOME 50 (Wayland).
@@ -43,9 +46,14 @@ Detalhes do padrão visual em [`docs/DESIGN.md`](docs/DESIGN.md).
 | `/usr/local/bin/nitro-profile` | Helper mínimo que só aceita um dos perfis listados em `platform_profile_choices` e grava no `platform_profile` |
 | `/usr/share/polkit-1/actions/com.eltobsjr.nitro.policy` | Deixa a extensão chamar o helper via `pkexec` **sem senha** na sessão ativa (só esse executável) |
 | `/usr/local/bin/nitro-boost` | Helper de root da GPU NVIDIA (NVML): offsets de clock, limite de potência e EPP do CPU. Confere tudo com a faixa que o driver informa |
-| `/usr/local/bin/nitro-fan` | Helper de root das ventoinhas (`auto` ou `max`) via módulo `nitro_fan` |
-| `/lib/modules/<kernel>/extra/nitro_fan.ko` + `/etc/modules-load.d/nitro_fan.conf` | Módulo próprio (`system/kmod`) que manda à BIOS o mesmo comando WMI de ventoinhas do NitroSense. Compilado para o kernel atual: **depois de atualizar o kernel, rode `./install.sh` de novo** (precisa de `kernel-devel`, `gcc` e `make`) |
+| `/usr/local/bin/nitro-fan` | Helper de root das ventoinhas (`auto`, `max`, `custom CPU% GPU%`, `curve on/off/set`). Usa o `pwm` do hwmon `acer` quando o kernel já tem (acer-wmi com o quirk do ANV15-51, que entrou no kernel oficial em out/2026); senão o módulo `nitro_fan` |
+| `/usr/local/bin/nitro-fancurve` + `nitro-fancurve.service` | Serviço root da **curva de ventoinha**: lê CPU/GPU a cada 2 s e ajusta a velocidade (sobe na hora, desce devagar; 100% acima de 92 °C). Ao parar, devolve as ventoinhas à BIOS. Curva em `/etc/nitro/fan-curve.json` |
+| `/usr/local/bin/nitro-battery` | Helper de root do limite de carga (`on` = 80%, `off` = 100%) |
+| `nitro_fan.ko` e `nitro_battery.ko` pelo **DKMS** (`nitro-kmod`) + `/etc/modules-load.d/nitro_fan.conf` | Módulos próprios (`system/kmod`). `nitro_fan`: mesmo comando WMI de ventoinhas do NitroSense (modo e velocidade), **só carrega nos modelos testados** (tabela DMI; `force=1` para arriscar). `nitro_battery`: "health mode" da Acer exposto como `charge_control_end_threshold` padrão do kernel. O DKMS recompila a cada kernel novo; sem DKMS o instalador compila só para o kernel atual |
+| `/etc/tuned/profiles/nitro-performance` + `/etc/tuned/ppd.conf` | Integração com o **tuned-ppd**: o "Desempenho" das Configurações rápidas passa a pedir o perfil Acer que o firmware aceita (o original pedia `performance`, recusado com EIO). Backup em `ppd.conf.nitro-orig` |
 | `~/.local/bin/nitro-mode` | Comando dos modos (sem root); também serve para lançadores de jogos |
+| `~/.local/bin/nitro-input` | Leitor de controles (sem root; o systemd já dá acesso aos joysticks). Só roda com o menu ou o testador aberto |
+| `~/.local/share/nitro/defaults.json` | Campos e modos de fábrica: fonte única para a extensão e o `nitro-mode` |
 | `~/.local/share/gnome-shell/extensions/nitro@eltobsjr.gmail.com` | A extensão |
 
 Se o `acer_wmi` já estiver carregado, ele é recarregado na hora com `predator_v4=1`.
@@ -55,7 +63,8 @@ Se o `acer_wmi` já estiver carregado, ele é recarregado na hora com `predator_
 - **Ícone na barra** com a cor do modo atual + temperatura da CPU (fica vermelha a
   partir de 90 °C).
 - **Cartão do topo**: modo atual e se está na tomada ou na bateria.
-- Ordem do menu: Perfil, Ventoinhas, Sensores, Modos e GPU. Perfil e Ventoinhas são
+- Ordem do menu: Perfil, Ventoinhas, Limite de carga, Sensores, Modos, Periféricos e GPU.
+  O cartão do topo fica fixo e o resto **rola** (em tela de 900 px o menu inteiro não cabe). Perfil e Ventoinhas são
   controles segmentados (só o item ativo recebe cor) e cada grupo tem o mesmo título em
   lavender.
 - **Perfil** — os mesmos perfis do NitroSense:
@@ -79,20 +88,28 @@ No ANV15-51 a tecla não passa pelo `acer_wmi`: o teclado a envia como `KEY_PROG
 já usar `XF86Launch1`), a extensão simplesmente não reage à tecla e o resto continua
 funcionando; esse caso não foi testado. Detalhes e medições em
 [`docs/ENGENHARIA-REVERSA.md`](docs/ENGENHARIA-REVERSA.md).
-- **Ventoinhas**: *Automático* (a BIOS decide) ou *Máximo* (cerca de 7000 rpm, medido). Fica
-  salvo e é reaplicado no login. A legenda ao lado do título mostra quem controla
-  ("BIOS no controle" ou "Rotação máxima fixa").
+- **Ventoinhas**: *Automático* (a BIOS decide), *Máximo* (cerca de 7000 rpm, medido) ou
+  *Curva* (serviço `nitro-fancurve`, editável nas preferências com prévia em gráfico). Fica
+  salvo e é reaplicado no login. A legenda ao lado do título mostra quem controla.
+- **Limite de carga em 80%**: interruptor que liga o "health mode" da bateria (o mesmo do
+  Acer Care Center). Some do menu se o módulo `nitro_battery` não estiver carregado.
+- **Histórico**: gráfico de CPU e GPU dos últimos 3 minutos (desligável).
+- **Periféricos**: controles, mouses, teclados e touchpad conectados, bateria dos sem fio (UPower)
+  e um ponto que acende no aparelho usado, com o último botão ou atalho apertado.
+  **Testar periféricos…** abre um testador com mouse, controle (analógicos, gatilhos, direcional,
+  todos os botões) e teclado ABNT2 desenhados, acendendo em tempo real. A entrada só é lida com
+  o menu ou o testador aberto.
 - **Modos**: conjuntos nomeados de ajustes que se ligam e desligam de uma vez. Vêm dois
-  prontos, *Gamer* e *Silêncio*; dá para criar, renomear e excluir os seus pela engrenagem
-  de cada linha. O modo ligado fica marcado com o indicador de seleção. Cada modo guarda (ou deixa em "—" para não mexer):
+  prontos, *Gamer* e *Silêncio*; dá para criar, renomear e excluir os seus nas
+  **preferências** (engrenagem de cada linha ou *Editar modos…*). O modo ligado fica marcado com o indicador de seleção. Cada modo guarda (ou deixa em "—" para não mexer):
 
   | Ajuste | Opções |
   |---|---|
   | Perfil | Eco, Silencioso, Equilibrado, Performance |
-  | Ventoinhas | Automático, Máximo |
+  | Ventoinhas | Automático, Máximo, Curva |
   | Overclock da GPU | Padrão, Boost (+100/+500 MHz), Máximo (+150/+1000), Livre (núcleo e memória) |
   | Limite de potência da GPU | 30 a 65 W, **só se o driver deixar**: no ANV15-51 ele responde `Not Supported` e o limite fica fixo em 50 W |
-  | CPU em performance | governor e EPP via `tuned` (`throughput-performance`) |
+  | CPU em performance | governor e EPP via `tuned` (`nitro-performance`, ou `throughput-performance` sem a integração) |
   | Só na tomada | ignora o modo na bateria |
   | Ligar ao abrir jogo | liga sozinho quando o GameMode registrar um jogo (só um modo por vez) |
 
@@ -109,7 +126,32 @@ funcionando; esse caso não foi testado. Detalhes e medições em
   `nvidia-smi` — senão ela acordaria a placa e gastaria bateria à toa.
 
 O último modo escolhido fica em `~/.local/state/nitro/profile` e é **reaplicado no
-login** (o firmware volta para `balanced` a cada boot).
+login** (o firmware volta para `balanced` a cada boot); ventoinhas e limite de carga também,
+mas só quando estão diferentes do salvo (nada de `pkexec` a cada desbloqueio de tela).
+
+## Preferências
+
+`gnome-extensions prefs nitro@eltobsjr.gmail.com` (ou *Editar modos…* no menu):
+
+- **Geral**: temperatura da GPU na barra (só com a GPU acordada), histórico, periféricos,
+  tecla NitroSense, **perfil automático na tomada e na bateria**, e um **estado do sistema**
+  que diz o que está instalado e funcionando (ventoinhas, limite de carga, integração com o
+  PPD, perfil da plataforma).
+- **Modos**: editor completo dos modos (substitui o editor que ficava dentro do menu).
+- **Curva de ventoinha**: pontos °C → % com gráfico; *Salvar curva* grava via `pkexec`.
+
+## Perfis de energia do GNOME (tuned-ppd)
+
+No Fedora o "Modo de energia" das Configurações rápidas é o `tuned-ppd`. Antes ele brigava
+com a extensão: o "Desempenho" pedia um perfil que o firmware recusa, e ligar ou tirar da
+tomada reaplicava o perfil dele por cima do escolhido. Agora:
+
+- o instalador aponta o "Desempenho" para o `nitro-performance` (perfil Acer
+  `balanced-performance`);
+- com a integração, Eco, Equilibrado e Performance da extensão passam pelo próprio PPD, e as
+  Configurações rápidas ficam em sincronia (Silencioso não tem equivalente e vai direto);
+- ao trocar a fonte de energia, a extensão espera o tuned terminar e devolve o perfil
+  escolhido (ou o automático da tomada/bateria, se configurado).
 
 ## Limitações
 
@@ -119,23 +161,56 @@ login** (o firmware volta para `balanced` a cada boot).
   Turbo fica escondido. Subir o limite de potência da CPU (PL1) também não deu ganho: a
   máquina já trava por temperatura. Evidências em
   [`docs/ENGENHARIA-REVERSA.md`](docs/ENGENHARIA-REVERSA.md).
-- **Ventoinha em porcentagem** (curva personalizada) e **RGB do teclado**: o `acer_wmi` do
-  kernel não expõe e o `nitro_fan` só implementa os modos *Automático* e *Máximo* (o
-  comando de velocidade ainda não foi mapeado). Para RGB existe o
+- **RGB do teclado**: não implementado. Para RGB existe o
   [DAMX](https://github.com/PXDiv/Div-Acer-Manager-Max), que troca o driver por um módulo próprio.
+- **Limite de carga**: o firmware só tem liga/desliga em 80%; qualquer valor abaixo de 100
+  escrito no `charge_control_end_threshold` vira 80.
+- **Mapeamento do controle**: segue os códigos do kernel (`BTN_SOUTH` = A embaixo,
+  `BTN_NORTH` = Y em cima). Drivers que trocam X/Y aparecem trocados no desenho; a lista de
+  chips embaixo mostra sempre o código real.
 - **Overclock da GPU** acima de +100/+500 MHz depende do silício e do calor: o helper só
   garante que o valor está dentro da faixa do driver, não que o jogo ficará estável.
 - O sensor de "qual ventoinha é qual" não é rotulado pelo driver — por isso
   *Ventoinha 1* e *Ventoinha 2*.
 
+## Solução de problemas
+
+**"módulo nitro_fan não carregado (rode o install.sh)"** — aparece na faixa vermelha do
+menu ao aplicar um modo com ventoinhas, e a seção *Ventoinhas* fica acinzentada (com um aviso
+amarelo explicando). Os sensores e o resto do modo continuam funcionando; só o controle das
+ventoinhas falha. As **Preferências › Geral › Estado do sistema** mostram o que falta.
+Causas comuns:
+
+- O módulo nunca foi instalado, ou foi instalado **sem DKMS** e o kernel foi atualizado.
+  Rode `./install.sh` de novo: ele instala o `dkms` (Fedora), registra os módulos e dali em
+  diante eles são recompilados sozinhos. Precisa de `kernel-devel` e senha de administrador.
+  Conferir: `dkms status nitro-kmod`.
+- **Secure Boot** ligado bloqueia módulos não assinados (`mokutil --sb-state`). O DKMS
+  assina com a chave dele; registre-a uma vez: `sudo mokutil --import /var/lib/dkms/mok.pub`
+  e confirme no próximo boot.
+- **Modelo diferente do ANV15-51**: o `nitro_fan` recusa carregar (veja `sudo dmesg | grep
+  nitro_fan`). Se você sabe o que está fazendo: `sudo modprobe nitro_fan force=1`.
+
+Para conferir: `lsmod | grep nitro_fan` e `cat /sys/kernel/nitro_fan/mode` (`unknown` até
+o primeiro modo ser aplicado; depois `auto` ou `max`). Se o `modprobe` falhar, veja
+`sudo dmesg | tail`. Depois de instalar, aplique o modo de novo no menu; se a extensão
+ainda mostrar o aviso antigo, faça logout/login (Wayland).
+
 ## Desenvolvimento
 
 ```bash
-make check     # sintaxe JS/shell, metadata.json e XML do polkit
+make test      # check + testes (nitro-mode, curva, nitro-input, store/utils/devices no gjs)
+make check     # sintaxe JS/Python/shell, JSON, XML, schema, tradução e contraste do tema
+make kmod      # compila os módulos para o kernel atual sem instalar
+make po        # extrai as strings e regera po/pt_BR.po (traduções em po/translate-pt_BR.py)
 make install   # = ./install.sh
-make pack      # .zip só da extensão
-make uninstall # remove extensão, estado e arquivos do sistema
+make pack      # .zip só da extensão (tema, schema e traduções compilados)
+make uninstall # = ./uninstall.sh (remove tudo; ~/.config/nitro/modes.json fica)
+sudo system/kmod/teste.sh   # teste no hardware: ventoinhas (max/custom/auto) e limite de carga
 ```
+
+As strings da interface ficam em inglês no código (padrão do gettext) e a tradução em
+português vem de `po/pt_BR.po`.
 
 Pelo terminal dá pra trocar o modo direto: `pkexec nitro-profile quiet`.
 
