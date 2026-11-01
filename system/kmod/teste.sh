@@ -1,5 +1,6 @@
 #!/bin/sh
-# Teste no hardware (como root): recarrega os módulos desta pasta e confere ventoinhas e limite de carga.
+# Teste no hardware (como root): recarrega os módulos e confere ventoinhas e limite de carga.
+# Usa os módulos instalados (DKMS); com --local, compila e testa os desta pasta.
 # Ventoinhas: "max" sobe a rotação, "custom" segue a porcentagem pedida, "auto" devolve à BIOS.
 # Bateria: liga e desliga o limite e devolve ao estado de antes.
 set -e
@@ -8,11 +9,22 @@ cd "$(dirname "$0")"
 rpm() { cat /sys/class/hwmon/hwmon*/fan1_input /sys/class/hwmon/hwmon*/fan2_input 2>/dev/null | tr '\n' ' '; }
 F=/sys/kernel/nitro_fan
 fail=0
+LOCAL=0
+[ "${1:-}" = --local ] && LOCAL=1
+# recarrega um módulo: o instalado (modprobe) ou, com --local, o compilado aqui (insmod)
+load() {
+    modprobe -r "$1" 2>/dev/null || rmmod "$1" 2>/dev/null || true
+    if [ $LOCAL = 0 ] && modinfo "$1" >/dev/null 2>&1; then
+        modprobe "$1"
+    else
+        [ -f "./$1.ko" ] || make -s >/dev/null
+        insmod "./$1.ko"
+    fi
+}
 check() { if [ "$2" = "$3" ]; then echo "  ok    $1"; else echo "  FALHA $1: esperado '$3', veio '$2'"; fail=1; fi; }
 
 echo "== nitro_fan"
-modprobe -r nitro_fan 2>/dev/null || rmmod nitro_fan 2>/dev/null || true
-insmod ./nitro_fan.ko
+load nitro_fan
 echo "antes:          $(rpm)"
 echo max > $F/mode; sleep 6
 echo "max:            $(rpm)"; check "modo max" "$(cat $F/mode)" max
@@ -26,8 +38,7 @@ echo auto > $F/mode; sleep 6
 echo "auto:           $(rpm)"; check "modo auto" "$(cat $F/mode)" auto
 
 echo "== nitro_battery"
-modprobe -r nitro_battery 2>/dev/null || rmmod nitro_battery 2>/dev/null || true
-insmod ./nitro_battery.ko
+load nitro_battery
 dmesg | grep -i nitro_battery | tail -2 || true
 B=$(for b in /sys/class/power_supply/*; do [ "$(cat $b/type)" = Battery ] && echo $b && break; done)
 T=$B/charge_control_end_threshold
