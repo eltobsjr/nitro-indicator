@@ -2,7 +2,7 @@
   "uuid": "nitro@eltobsjr.gmail.com",
   "name": "Nitro",
   "description": "NitroSense-style control center for Acer Nitro laptops: performance profiles, fans (auto, max or curve), battery charge limit, temperatures and NVIDIA GPU in the top bar.",
-  "version-name": "0.4.0",
+  "version-name": "0.5.0",
   "shell-version": [
     "48",
     "49",

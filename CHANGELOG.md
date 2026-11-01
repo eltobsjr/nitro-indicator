@@ -7,6 +7,8 @@ Todas as mudanças relevantes do projeto ficam aqui. O formato segue o
 
 ## [Não lançado]
 
+## [0.5.0] - 2026-11-01
+
 ### Adicionado
 - **Laboratório › Personalizado**: ao mexer na grade, o layout vira *Personalizado* sozinho e a
   edição fica guardada à parte (chave `grid-custom`); escolher um layout pronto não a apaga.
@@ -21,6 +23,7 @@ Todas as mudanças relevantes do projeto ficam aqui. O formato segue o
   itens no caminho, ou item novo vindo da gaveta), quem está no caminho desce. Linhas vazias somem.
   As setas do teclado seguem a mesma regra.
 - README: seção do laboratório atualizada e este CHANGELOG.
+- Versões marcadas com tags (`v0.1.0` a `v0.5.0`).
 
 ### Corrigido
 - Não dava para reordenar os itens: o laboratório recusava soltar em célula ocupada, e os layouts
@@ -98,3 +101,10 @@ Todas as mudanças relevantes do projeto ficam aqui. O formato segue o
 - Rotação das ventoinhas, temperaturas da CPU e da GPU, seção da GPU NVIDIA sem acordá-la.
 - Helper root com polkit para trocar o perfil sem senha; último perfil reaplicado no login; OSD.
 - `install.sh`, Makefile e README.
+
+[Não lançado]: https://github.com/eltobsjr/nitro-indicator/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/eltobsjr/nitro-indicator/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/eltobsjr/nitro-indicator/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/eltobsjr/nitro-indicator/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/eltobsjr/nitro-indicator/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/eltobsjr/nitro-indicator/releases/tag/v0.1.0
