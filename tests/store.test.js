@@ -123,7 +123,7 @@ eq('SDL: LT apertado, RT solto', [Math.round(sx2.lt * 100) / 100, sx2.rt], [1, 0
 eq('SDL: direcional para a direita', [sx2.up, sx2.down, sx2.left_, sx2.right_], [false, false, false, true]);
 eq('SDL: analógico esquerdo à direita', Math.round(sx2.left[0]), 1);
 
-// layout em grade: linha, coluna e tamanho escolhidos (nada se encaixa sozinho)
+// layout em grade: linha, coluna e tamanho escolhidos (buracos na mesma linha são permitidos)
 const it = (id, size, r, c) => ({id, size, r, c});
 const parsed = layout.parseItems(['cpu:1x1:0:0', 'gputemp:1x1:0:1', 'xyz:1x1:0:2', 'cpu:2x1:3:0', 'fan1:1x1:0:1', 'profile:full:1:3', 'fan2:9x9:2:2']);
 eq('grade: lê, ignora desconhecidos, repetidos e sobrepostos', parsed.map(i => `${i.id}:${i.size}:${i.r}:${i.c}`),

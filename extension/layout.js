@@ -1,5 +1,5 @@
 // Layout do menu em grade: cada item tem linha, coluna e tamanho, escolhidos por você no laboratório das
-// preferências (nada se encaixa sozinho). Sem St/Gtk: usado pelo menu, pelo laboratório e pelos testes.
+// preferências (soltar em cima de outro troca ou empurra; layouts com nome). Sem St/Gtk: usado pelo menu, pelo laboratório e pelos testes.
 //
 // A grade tem 4 colunas. Há dois tipos de tamanho:
 //   - ladrilho (w × h células): altura fixa, h linhas; ex. 1x1, 2x1, 2x2, 4x2
