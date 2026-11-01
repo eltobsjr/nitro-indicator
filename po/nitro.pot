@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 04:00-0300\n"
+"POT-Creation-Date: 2026-11-01 15:07-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,37 +43,35 @@ msgstr ""
 msgid "Performance"
 msgstr ""
 
-#: extension/extension.js:62 extension/lab.js:150 extension/lab.js:349
-#: extension/prefs.js:245
+#: extension/extension.js:62 extension/lab.js:150 extension/prefs.js:245
 msgid "Auto"
 msgstr ""
 
 #: extension/extension.js:63 extension/lab.js:150 extension/lab.js:345
-#: extension/lab.js:349 extension/prefs.js:245
+#: extension/prefs.js:245
 msgid "Max"
 msgstr ""
 
-#: extension/extension.js:64 extension/lab.js:150 extension/lab.js:349
-#: extension/prefs.js:245
+#: extension/extension.js:64 extension/lab.js:150 extension/prefs.js:245
 msgid "Curve"
 msgstr ""
 
 #: extension/extension.js:297 extension/lab.js:144 extension/lab.js:323
 #: extension/lab.js:328 extension/layout.js:17 extension/prefs.js:239
-#: extension/tiles.js:229 extension/tiles.js:231 extension/tiles.js:242
-#: extension/tiles.js:245
+#: extension/tiles.js:231 extension/tiles.js:233 extension/tiles.js:244
+#: extension/tiles.js:247
 msgid "Profile"
 msgstr ""
 
 #: extension/extension.js:308 extension/extension.js:824 extension/lab.js:149
 #: extension/lab.js:249 extension/lab.js:341 extension/layout.js:19
-#: extension/prefs.js:244 extension/tiles.js:249 extension/tiles.js:251
-#: extension/tiles.js:265
+#: extension/prefs.js:244 extension/tiles.js:251 extension/tiles.js:253
+#: extension/tiles.js:268
 msgid "Fans"
 msgstr ""
 
 #: extension/extension.js:327 extension/extension.js:335 extension/lab.js:153
-#: extension/tiles.js:268
+#: extension/tiles.js:271
 msgid "Limit charge to 80%"
 msgstr ""
 
@@ -82,12 +80,12 @@ msgid "Sensors"
 msgstr ""
 
 #: extension/extension.js:346 extension/lab.js:163 extension/lab.js:309
-#: extension/layout.js:29 extension/tiles.js:192
+#: extension/layout.js:29 extension/tiles.js:194
 msgid "Fan 1"
 msgstr ""
 
 #: extension/extension.js:346 extension/lab.js:163 extension/lab.js:309
-#: extension/layout.js:31 extension/tiles.js:192
+#: extension/layout.js:31 extension/tiles.js:194
 msgid "Fan 2"
 msgstr ""
 
@@ -95,11 +93,11 @@ msgstr ""
 msgid "Sleeping — saving power"
 msgstr ""
 
-#: extension/extension.js:551 extension/tiles.js:169 extension/tiles.js:179
+#: extension/extension.js:551 extension/tiles.js:171 extension/tiles.js:181
 msgid "THROTTLING"
 msgstr ""
 
-#: extension/extension.js:551 extension/tiles.js:179
+#: extension/extension.js:551 extension/tiles.js:181
 msgid "POWER LIMIT"
 msgstr ""
 
@@ -107,11 +105,11 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: extension/extension.js:750 extension/tiles.js:182
+#: extension/extension.js:750 extension/tiles.js:184
 msgid "Sleeping"
 msgstr ""
 
-#: extension/extension.js:760 extension/tiles.js:182
+#: extension/extension.js:760 extension/tiles.js:184
 #, javascript-format
 msgid "Load %s"
 msgstr ""
@@ -161,13 +159,13 @@ msgstr ""
 
 #: extension/extension.js:1064 extension/lab.js:215 extension/lab.js:368
 #: extension/lab.js:531 extension/pieces.js:94 extension/prefs.js:107
-#: extension/tiles.js:289
+#: extension/tiles.js:292
 msgid "Plugged in"
 msgstr ""
 
 #: extension/extension.js:1065 extension/lab.js:215 extension/lab.js:368
-#: extension/pieces.js:94 extension/prefs.js:107 extension/tiles.js:221
-#: extension/tiles.js:289
+#: extension/pieces.js:94 extension/prefs.js:107 extension/tiles.js:223
+#: extension/tiles.js:292
 msgid "On battery"
 msgstr ""
 
@@ -268,18 +266,18 @@ msgstr ""
 
 #: extension/lab.js:184 extension/lab.js:385 extension/layout.js:37
 #: extension/modes.js:28 extension/modes.js:34 extension/modes.js:43
-#: extension/prefs.js:174 extension/prefs.js:175 extension/tiles.js:357
+#: extension/prefs.js:174 extension/prefs.js:175 extension/tiles.js:360
 msgid "Modes"
 msgstr ""
 
 #: extension/lab.js:191 extension/lab.js:394 extension/layout.js:39
 #: extension/peripherals.js:306 extension/peripherals.js:312
-#: extension/tiles.js:385
+#: extension/tiles.js:388
 msgid "Peripherals"
 msgstr ""
 
 #: extension/lab.js:214 extension/lab.js:366 extension/layout.js:49
-#: extension/pieces.js:92 extension/prefs.js:104 extension/tiles.js:286
+#: extension/pieces.js:92 extension/prefs.js:104 extension/tiles.js:289
 msgid "Automatic profile"
 msgstr ""
 
@@ -293,62 +291,74 @@ msgid "Game mode through GameMode"
 msgstr ""
 
 #: extension/lab.js:231 extension/lab.js:363 extension/layout.js:55
-#: extension/pieces.js:55 extension/prefs.js:99 extension/tiles.js:280
+#: extension/pieces.js:55 extension/prefs.js:99 extension/tiles.js:283
 msgid "NitroSense key"
 msgstr ""
 
 #: extension/lab.js:236 extension/lab.js:380 extension/layout.js:45
 #: extension/pieces.js:121 extension/prefs.js:305 extension/prefs.js:306
-#: extension/tiles.js:323
+#: extension/tiles.js:326
 msgid "Fan curve"
 msgstr ""
 
-#: extension/lab.js:237 extension/pieces.js:122 extension/tiles.js:324
+#: extension/lab.js:237 extension/pieces.js:122 extension/tiles.js:327
 msgid "Edit"
 msgstr ""
 
 #: extension/lab.js:245 extension/peripherals.js:322 extension/pieces.js:78
-#: extension/tiles.js:383 extension/tiles.js:430
+#: extension/tiles.js:386 extension/tiles.js:433
 msgid "Test peripherals…"
 msgstr ""
 
-#: extension/lab.js:245 extension/pieces.js:78 extension/tiles.js:430
+#: extension/lab.js:245 extension/pieces.js:78 extension/tiles.js:433
 msgid "Preferences…"
 msgstr ""
 
-#: extension/lab.js:292 extension/tiles.js:123
+#: extension/lab.js:292 extension/tiles.js:125
 msgid "On"
 msgstr ""
 
-#: extension/lab.js:292 extension/pieces.js:67 extension/tiles.js:123
+#: extension/lab.js:292 extension/pieces.js:67 extension/tiles.js:125
 msgid "Off"
 msgstr ""
 
-#: extension/lab.js:316 extension/layout.js:33 extension/tiles.js:221
+#: extension/lab.js:316 extension/layout.js:33 extension/tiles.js:223
 msgid "Battery"
 msgstr ""
 
-#: extension/lab.js:354 extension/tiles.js:268
+#: extension/lab.js:349 extension/tiles.js:259 extension/tiles.js:267
+msgid "Auto (short)"
+msgstr ""
+
+#: extension/lab.js:349 extension/tiles.js:259 extension/tiles.js:267
+msgid "Max (short)"
+msgstr ""
+
+#: extension/lab.js:349 extension/tiles.js:259 extension/tiles.js:267
+msgid "Curve (short)"
+msgstr ""
+
+#: extension/lab.js:354 extension/tiles.js:271
 msgid "Limit 80%"
 msgstr ""
 
-#: extension/lab.js:357 extension/tiles.js:272
+#: extension/lab.js:357 extension/tiles.js:275
 msgid "60 Hz on battery"
 msgstr ""
 
-#: extension/lab.js:403 extension/layout.js:43 extension/tiles.js:403
+#: extension/lab.js:403 extension/layout.js:43 extension/tiles.js:406
 msgid "Apps using the GPU"
 msgstr ""
 
-#: extension/lab.js:412 extension/tiles.js:417
+#: extension/lab.js:412 extension/tiles.js:420
 msgid "System"
 msgstr ""
 
-#: extension/lab.js:424 extension/tiles.js:436
+#: extension/lab.js:424 extension/tiles.js:439
 msgid "Test peripherals"
 msgstr ""
 
-#: extension/lab.js:424 extension/layout.js:59 extension/tiles.js:436
+#: extension/lab.js:424 extension/layout.js:59 extension/tiles.js:439
 msgid "Preferences"
 msgstr ""
 
@@ -414,28 +424,28 @@ msgstr ""
 msgid "Take out of the menu"
 msgstr ""
 
-#: extension/lab.js:822
+#: extension/lab.js:825
 msgid "drag to move, click for the size"
 msgstr ""
 
-#: extension/lab.js:865
+#: extension/lab.js:877
 msgid "Drag to the grid or press Enter"
 msgstr ""
 
-#: extension/lab.js:881
+#: extension/lab.js:893
 msgid "Everything is in the menu"
 msgstr ""
 
-#: extension/lab.js:892
+#: extension/lab.js:904
 msgid "icon"
 msgstr ""
 
-#: extension/lab.js:904
+#: extension/lab.js:916
 #, javascript-format
 msgid "%d px: fits your smallest screen (%d px) without scrolling"
 msgstr ""
 
-#: extension/lab.js:905
+#: extension/lab.js:917
 #, javascript-format
 msgid "%d px: %d px more than your smallest screen; the menu will scroll"
 msgstr ""
@@ -703,7 +713,7 @@ msgstr ""
 msgid "Watts, only on battery"
 msgstr ""
 
-#: extension/modes.js:38 extension/tiles.js:358
+#: extension/modes.js:38 extension/tiles.js:361
 msgid "Edit modes…"
 msgstr ""
 
@@ -1092,53 +1102,41 @@ msgstr ""
 msgid "No changes"
 msgstr ""
 
-#: extension/tiles.js:169 extension/tiles.js:179
+#: extension/tiles.js:171 extension/tiles.js:181
 msgid "LIM"
 msgstr ""
 
-#: extension/tiles.js:171
+#: extension/tiles.js:173
 #, javascript-format
 msgid "%d throttles since boot"
 msgstr ""
 
-#: extension/tiles.js:193
+#: extension/tiles.js:195
 msgid "Fan 1 · CPU"
 msgstr ""
 
-#: extension/tiles.js:193
+#: extension/tiles.js:195
 msgid "Fan 2 · GPU"
 msgstr ""
 
-#: extension/tiles.js:242
+#: extension/tiles.js:244
 msgid "tap to change"
 msgstr ""
 
-#: extension/tiles.js:264
-msgid "Auto (short)"
-msgstr ""
-
-#: extension/tiles.js:264
-msgid "Max (short)"
-msgstr ""
-
-#: extension/tiles.js:264
-msgid "Curve (short)"
-msgstr ""
-
-#: extension/tiles.js:273
+#: extension/tiles.js:276
 msgid "now at 60 Hz"
 msgstr ""
 
-#: extension/tiles.js:277
+#: extension/tiles.js:280
 #, javascript-format
 msgid "turns on %s"
 msgstr ""
 
-#: extension/tiles.js:403
+#: extension/tiles.js:406
 msgid "On the GPU"
 msgstr ""
 
-#: extension/tiles.js:407
+#: extension/tiles.js:410
 msgid "GPU asleep: no app is using it"
 msgstr ""
 

@@ -528,3 +528,9 @@
 .nitro-t .nitro-t-value { font-size: 0.78em; }
 .nitro-t .nitro-gpuapps { padding-top: 4px; border-top-width: 0; }
 .nitro-t .nitro-gpuapps-row { padding: 3px 4px 3px 6px; }
+
+/* 1x1 de interruptor: cabe ícone, nome em duas linhas e o estado */
+.nitro-t-in.nitro-t-small { padding: 8px 9px; spacing: 1px; }
+.nitro-t-small .nitro-t-toggle-ic { width: 24px; height: 24px; border-radius: 8px; }
+.nitro-t-small .nitro-t-name { font-size: 0.7em; }
+.nitro-t-small .nitro-t-state { font-size: 0.64em; }

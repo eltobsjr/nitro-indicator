@@ -105,6 +105,8 @@ function toggleTile(icon, name, wide, onToggle) {
     let on = false;
     const r = root(true, () => onToggle(!on), name);
     const c = r.inner;
+    if (!wide)
+        c.add_style_class_name('nitro-t-small');
     const ic = new St.Icon({icon_name: icon, icon_size: 16, style_class: 'nitro-t-toggle-icon'});
     const top = box('', false);
     top.add_child(new St.Bin({child: ic, style_class: 'nitro-t-toggle-ic'}));
@@ -254,10 +256,11 @@ export function buildTile(id, size, ctx) {
             c.add_child(icon);
             const name = wrapText('nitro-t-value');
             c.add_child(name);
+            const short = {auto: _('Auto (short)'), max: _('Max (short)'), curve: _('Curve (short)')};
             return {actor: r.actor, update: d => {
                 const f = d.fans.find(x => x.id === d.fan);
                 icon.icon_name = f?.icon ?? 'weather-windy-symbolic';
-                name.text = f?.label ?? '—';
+                name.text = short[f?.id] ?? f?.label ?? '—';
                 name.style_class = `nitro-t-value nitro-t-${f?.cls ?? 'balanced'}`;
             }};
         }

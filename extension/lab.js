@@ -288,7 +288,7 @@ function drawTile(_, id, size) {
         const ic = new Gtk.Image({icon_name: icon, css_classes: ['lab-t-ic'], halign: Gtk.Align.START});
         t.append(ic);
         fill();
-        t.append(label(name, 'lab-card-title', {ellipsize: 3}));
+        t.append(label(name, 'lab-card-title', {wrap: true, lines: 2, ellipsize: 3}));
         sub(on ? _('On') : _('Off'));
     };
     const CPU = [0.3, 0.35, 0.5, 0.45, 0.6, 0.7, 0.65, 0.78], GPU = [0.3, 0.32, 0.36, 0.42, 0.45, 0.47, 0.5, 0.52];
@@ -346,7 +346,7 @@ function drawTile(_, id, size) {
         } else {
             const s = hbox(3, 'lab-seg');
             s.homogeneous = true;
-            [_('Auto'), _('Max'), _('Curve')].forEach((n, i) => s.append(label(n, `lab-seg-btn${i === 1 ? ' on' : ''}`, {xalign: 0.5})));
+            [_('Auto (short)'), _('Max (short)'), _('Curve (short)')].forEach((n, i) => s.append(label(n, `lab-seg-btn${i === 1 ? ' on' : ''}`, {xalign: 0.5})));
             t.append(s);
         }
         break;
@@ -651,7 +651,10 @@ export function buildLab(page, settings, _, Adw) {
     const canvasDrop = Gtk.DropTarget.new(GObject.TYPE_STRING, Gdk.DragAction.MOVE);
     const candidate = (x, y) => {
         const sz = sizeOf(drag.id, drag.size);
-        const {r, c} = cellAt(geo, x - (sz.auto ? 0 : drag.offX), y - drag.offY + 12, sz);
+        // da grade: onde você pegou o item; da gaveta (peça larga): o ponteiro é o meio da primeira célula
+        const offX = drag.from === 'drawer' ? geo.cell / 2 : drag.offX;
+        const offY = drag.from === 'drawer' ? geo.cell / 2 : drag.offY;
+        const {r, c} = cellAt(geo, x - (sz.auto ? 0 : offX), y - offY + 12, sz);
         const item = {id: drag.id, size: sz.key, r, c};
         return {item, ok: fits(items(), item)};
     };
@@ -831,9 +834,18 @@ export function buildLab(page, settings, _, Adw) {
         geo = layoutGeo(list);
         for (const w of Object.values(widgets))
             canvas.remove(w);
-        // células vazias tracejadas: onde dá para soltar
+        // células livres tracejadas: onde dá para soltar (as ocupadas ficam por baixo do item)
+        const busy = new Set();
+        for (const item of list) {
+            const sz = sizeOf(item.id, item.size);
+            for (let r = item.r; r < item.r + sz.h; r++)
+                for (let c = item.c; c < item.c + sz.w; c++)
+                    busy.add(`${r},${c}`);
+        }
         for (let r = 0; r < geo.rows; r++) {
             for (let c = 0; c < COLS; c++) {
+                if (busy.has(`${r},${c}`))
+                    continue;
                 const cell = new Gtk.Box({css_classes: ['lab-cell'], can_target: false});
                 cell.set_size_request(Math.floor(geo.cell), Math.floor(geo.heights[r]));
                 canvas.put(cell, c * (geo.cell + geo.gap), geo.tops[r]);
