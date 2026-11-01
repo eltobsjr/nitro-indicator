@@ -1,0 +1,19 @@
+#!/bin/sh
+# Limite de carga da bateria (módulo nitro_battery: charge_control_end_threshold). Chamado pela extensão via pkexec.
+# Uso: nitro-battery on|off|status    on = segura em 80%, off = carrega até 100%
+for b in /sys/class/power_supply/*; do
+    [ "$(cat "$b/type" 2>/dev/null)" = Battery ] && [ -e "$b/charge_control_end_threshold" ] && { T=$b/charge_control_end_threshold; break; }
+done
+if [ -z "${T:-}" ]; then
+    modprobe nitro_battery 2>/dev/null && sleep 1
+    for b in /sys/class/power_supply/*; do
+        [ -e "$b/charge_control_end_threshold" ] && { T=$b/charge_control_end_threshold; break; }
+    done
+fi
+[ -n "${T:-}" ] || { echo "limite de carga indisponível (módulo nitro_battery não carregado; rode o install.sh)" >&2; exit 4; }
+case "$1" in
+    on) printf 80 > "$T" ;;
+    off) printf 100 > "$T" ;;
+    status) [ "$(cat "$T")" -lt 100 ] && echo on || echo off ;;
+    *) echo "uso: nitro-battery on|off|status" >&2; exit 2 ;;
+esac

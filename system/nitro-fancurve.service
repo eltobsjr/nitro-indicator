@@ -1,0 +1,14 @@
+[Unit]
+Description=Curva de ventoinha do Acer Nitro
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/nitro-fancurve
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+# devolve as ventoinhas à BIOS mesmo se o processo for morto à força
+ExecStopPost=-/usr/local/bin/nitro-fan auto
+ProtectHome=yes
+PrivateTmp=yes

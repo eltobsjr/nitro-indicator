@@ -1,11 +1,74 @@
 #!/bin/sh
-# Modo das ventoinhas do Acer Nitro (módulo nitro_fan, WMI gaming 0x0E). Chamado pela extensão Nitro via pkexec.
+# Ventoinhas do Acer Nitro. Chamado pela extensão Nitro e pelo nitro-mode via pkexec.
 # Uso: nitro-fan auto|max|status
-f=/sys/kernel/nitro_fan/mode
-[ -e "$f" ] || modprobe nitro_fan 2>/dev/null
-[ -e "$f" ] || { echo "módulo nitro_fan não carregado (rode o install.sh)" >&2; exit 4; }
-case "$1" in
-    auto|max) printf '%s' "$1" > "$f" ;;
-    status) cat "$f" ;;
-    *) echo "uso: nitro-fan auto|max|status" >&2; exit 2 ;;
+#      nitro-fan custom CPU% GPU%     velocidade fixa (0–100)
+#      nitro-fan curve on|off         curva por temperatura (serviço nitro-fancurve, config em /etc/nitro/fan-curve.json)
+#      nitro-fan curve set JSON       grava a curva
+# Usa o pwm do hwmon "acer" quando o kernel já tem (acer-wmi com o quirk do modelo); senão o módulo nitro_fan.
+set -u
+CURVE_CONF=/etc/nitro/fan-curve.json
+
+hwmon() {
+    for d in /sys/class/hwmon/hwmon*; do
+        [ "$(cat "$d/name" 2>/dev/null)" = acer ] && [ -e "$d/pwm1_enable" ] && { echo "$d"; return; }
+    done
+}
+H=$(hwmon)
+F=/sys/kernel/nitro_fan
+if [ -z "$H" ] && [ ! -e $F/mode ]; then
+    modprobe nitro_fan 2>/dev/null
+    [ -e $F/mode ] || { echo "módulo nitro_fan não carregado (rode o install.sh)" >&2; exit 4; }
+fi
+
+pct() { case "$1" in ''|*[!0-9]*) return 1 ;; esac; [ "$1" -le 100 ]; }
+
+# pwm_enable do acer-wmi: 0 = turbo (máx), 1 = custom, 2 = auto; pwm vai de 0 a 255
+set_mode() {
+    if [ -n "$H" ]; then
+        case "$1" in auto) v=2 ;; max) v=0 ;; custom) v=1 ;; esac
+        printf '%s' $v > "$H/pwm1_enable" && printf '%s' $v > "$H/pwm2_enable"
+    else
+        printf '%s' "$1" > $F/mode
+    fi
+}
+
+set_speed() {
+    if [ -n "$H" ]; then
+        printf '%s' $(($1 * 255 / 100)) > "$H/pwm1" && printf '%s' $(($2 * 255 / 100)) > "$H/pwm2"
+    else
+        printf '%s' "$1" > $F/cpu_speed && printf '%s' "$2" > $F/gpu_speed
+    fi
+}
+
+status() {
+    if systemctl -q is-active nitro-fancurve 2>/dev/null; then echo curve; return; fi
+    if [ -n "$H" ]; then
+        case "$(cat "$H/pwm1_enable")" in 0) echo max ;; 1) echo custom ;; 2) echo auto ;; *) echo unknown ;; esac
+    else
+        cat $F/mode
+    fi
+}
+
+stop_curve() { systemctl -q is-active nitro-fancurve 2>/dev/null && systemctl stop nitro-fancurve; return 0; }
+
+case "${1:-}" in
+    auto|max) stop_curve; set_mode "$1" ;;
+    custom)
+        pct "${2:-}" && pct "${3:-}" || { echo "uso: nitro-fan custom CPU% GPU% (0–100)" >&2; exit 2; }
+        stop_curve; set_mode custom && set_speed "$2" "$3" ;;
+    curve)
+        case "${2:-}" in
+            on) systemctl start nitro-fancurve ;;
+            off) stop_curve; set_mode auto ;;
+            set)
+                [ -n "${3:-}" ] || { echo "uso: nitro-fan curve set JSON" >&2; exit 2; }
+                /usr/local/bin/nitro-fancurve --check "$3" || exit 2
+                mkdir -p /etc/nitro && printf '%s\n' "$3" > $CURVE_CONF
+                systemctl -q is-active nitro-fancurve && systemctl reload nitro-fancurve
+                exit 0 ;;
+            *) echo "uso: nitro-fan curve on|off|set JSON" >&2; exit 2 ;;
+        esac ;;
+    status) status ;;
+    backend) [ -n "$H" ] && echo "hwmon $H" || echo "nitro_fan" ;;
+    *) echo "uso: nitro-fan auto|max|status | custom CPU% GPU% | curve on|off|set JSON" >&2; exit 2 ;;
 esac

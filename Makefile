@@ -3,7 +3,7 @@ EXT  = extension
 DEST = $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 STATE = $(or $(XDG_STATE_HOME),$(HOME)/.local/state)/nitro
 
-.PHONY: all install uninstall enable disable schema check test pack clean
+.PHONY: all install uninstall enable disable check test po kmod pack clean
 
 all: install
 
@@ -17,20 +17,34 @@ enable:
 disable:
 	@gnome-extensions disable $(UUID)
 
-# Remove a extensão, o estado e os arquivos do sistema (pede senha)
+# Remove tudo o que o install.sh pôs (pede senha); ~/.config/nitro/modes.json fica
 uninstall:
-	@rm -rf "$(DEST)" "$(STATE)"; sudo modprobe -r nitro_fan 2>/dev/null || true
-	@sudo rm -f /usr/local/bin/nitro-profile /usr/local/bin/nitro-boost /usr/local/bin/nitro-fan /usr/share/polkit-1/actions/com.eltobsjr.nitro.policy /etc/modprobe.d/acer-nitro.conf /etc/modules-load.d/nitro_fan.conf
-	@sudo rm -f /lib/modules/*/extra/nitro_fan.ko && sudo depmod -a || true
-	@rm -f $(HOME)/.local/bin/nitro-mode
-	@echo "Removido. O acer_wmi volta ao normal no próximo boot."
+	@./uninstall.sh
+
+# Traduções: extrai as strings, regera o pt_BR.po (po/translate-pt_BR.py) e confere
+po:
+	@xgettext --from-code=UTF-8 --language=JavaScript --keyword=_ -o po/nitro.pot $(EXT)/*.js
+	@xgettext --from-code=UTF-8 -j -o po/nitro.pot $(EXT)/schemas/*.xml
+	@python3 po/translate-pt_BR.py && msgfmt --check -o /dev/null po/pt_BR.po && echo "po ok"
+
+# Compila os módulos para o kernel atual sem instalar (confere que o código C compila)
+kmod:
+	@$(MAKE) -s -C system/kmod && $(MAKE) -s -C system/kmod clean >/dev/null && echo "kmod ok"
+
+# Testes automáticos (sem root, sem mexer no hardware): Python dos helpers + checagem estática
+test: check
+	@python3 -m unittest discover -s tests -t . -q
 
 # Checagem estática: sintaxe JS/Python/JSON, schema e o tema (todas as paletas e cores de destaque)
 check:
 	@d=$$(mktemp -d); for f in $$(find $(EXT) -name '*.js'); do \
 		cp $$f $$d/x.mjs && node --check $$d/x.mjs || { rm -rf $$d; exit 1; }; done; rm -rf $$d
 	@python3 -m py_compile scripts/eltob-setup.py && rm -rf scripts/__pycache__
-	@python3 -c "import json; [json.load(open(f)) for f in ('$(EXT)/metadata.json','scripts/options.json','scripts/palettes.json')]"
+	@for f in system/nitro-mode system/nitro-boost system/nitro-fancurve system/nitro-input; do python3 -c "import ast,sys; ast.parse(open('$$f').read())" || exit 1; done
+	@for f in system/nitro-fan system/nitro-battery system/nitro-profile install.sh uninstall.sh; do sh -n $$f 2>/dev/null || bash -n $$f || exit 1; done
+	@xmllint --noout system/com.eltobsjr.nitro.policy $(EXT)/schemas/*.xml
+	@msgfmt --check -o /dev/null po/pt_BR.po
+	@python3 -c "import json; [json.load(open(f)) for f in ('$(EXT)/metadata.json','$(EXT)/defaults.json','scripts/options.json','scripts/palettes.json')]"
 	@if [ -d $(EXT)/schemas ]; then glib-compile-schemas --strict --dry-run $(EXT)/schemas; fi
 	@d=$$(mktemp -d); for p in macchiato frappe mocha; do for a in blue mauve green red; do \
 		python3 scripts/eltob-setup.py render --template $(EXT)/stylesheet.tpl.css --out $$d/s.css --palette $$p --accent $$a || exit 1; \
@@ -38,13 +52,15 @@ check:
 	@python3 scripts/eltob-setup.py contrast
 	@echo "check ok"
 
-# Gera o .zip só da extensão, com o tema padrão (Macchiato/azul) já renderizado
+# Gera o .zip só da extensão, com o tema padrão (Macchiato/azul) já renderizado, schema e traduções compilados
 pack:
 	@d=$$(mktemp -d); cp -r $(EXT)/. $$d/; rm -f $$d/schemas/gschemas.compiled; \
 		python3 scripts/eltob-setup.py render --template $$d/stylesheet.tpl.css --out $$d/stylesheet.css --title "Nitro" && rm $$d/stylesheet.tpl.css; \
+		glib-compile-schemas $$d/schemas; \
+		for po in po/*.po; do l=$$(basename $$po .po); mkdir -p $$d/locale/$$l/LC_MESSAGES; msgfmt -o $$d/locale/$$l/LC_MESSAGES/$(UUID).mo $$po; done; \
 		rm -f $(UUID).shell-extension.zip; (cd $$d && zip -qr -FS "$(CURDIR)/$(UUID).shell-extension.zip" .); rm -rf $$d
 	@echo "Pacote: $(UUID).shell-extension.zip"
 
 clean:
-	@rm -f $(UUID).shell-extension.zip $(EXT)/stylesheet.css $(EXT)/schemas/gschemas.compiled
+	@rm -rf $(UUID).shell-extension.zip $(EXT)/stylesheet.css $(EXT)/schemas/gschemas.compiled $(EXT)/locale
 	@find . -name '__pycache__' -type d -prune -exec rm -rf {} +

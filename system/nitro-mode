@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 """Modos do Nitro: conjuntos nomeados de ajustes (perfil, ventoinhas, GPU, CPU) que se ligam e desligam de uma vez.
 
-Uso: nitro-mode on NOME | off | toggle NOME | active | list | show NOME | status
+Uso: nitro-mode on NOME | off | toggle NOME | active | list | show NOME | status | defaults
 Os modos ficam em ~/.config/nitro/modes.json (a extensão Nitro edita; pode editar à mão).
 Enquanto um modo está ligado, o estado anterior fica em ~/.local/state/nitro/mode-active.json e o "off" restaura.
 Chama os helpers de root via pkexec (o polkit libera na sessão ativa, sem senha).
 Saída 0 = tudo aplicado, 1 = algum passo falhou (os demais foram aplicados; o motivo vai no stderr), 2 = uso errado.
 """
 import fcntl
+import glob
 import json
 import os
 import re
@@ -20,27 +21,37 @@ ACTIVE = os.path.join(STATE_DIR, 'mode-active.json')
 LOCK = os.path.join(STATE_DIR, 'mode.lock')
 PROFILE_FILE = '/sys/firmware/acpi/platform_profile'
 BIN = '/usr/local/bin'
-FANS = ('auto', 'max')
+FANS = ('auto', 'max', 'curve')
 OFFSETS = ('off', 'boost', 'max', 'custom')
+# tuned do "CPU em performance": o nitro-performance (system/tuned) pede o perfil Acer que o firmware aceita
+TUNED_PERF = 'nitro-performance' if os.path.isdir('/etc/tuned/profiles/nitro-performance') else 'throughput-performance'
 
-# Campos de um modo. null/ausente = "não mexer" naquele ajuste. Os mesmos padrões ficam em extension.js (MODE_FIELDS).
-FIELDS = {
-    'profile': 'balanced-performance',  # perfil térmico da Acer
-    'fan': 'max',                       # auto | max
-    'gpu_offset': 'boost',              # off | boost | max | custom
-    'gpu_custom': {'gpc': 100, 'mem': 500},  # MHz, usado quando gpu_offset = custom
-    'power_limit': None,                # watts da GPU
-    'cpu_performance': True,            # tuned throughput-performance (governor/EPP em performance)
-    'only_on_ac': True,                 # ignora o modo na bateria
-    'auto_gamemode': False,             # só a extensão usa: liga quando o GameMode registra um jogo
-}
-
-BUILTIN = [
-    {'id': 'gamer', 'name': 'Gamer', 'icon': 'input-gaming-symbolic', **FIELDS, 'auto_gamemode': True},
-    {'id': 'silencio', 'name': 'Silêncio', 'icon': 'weather-clear-night-symbolic', 'profile': 'quiet', 'fan': 'auto',
-     'gpu_offset': 'off', 'gpu_custom': FIELDS['gpu_custom'], 'power_limit': None, 'cpu_performance': False,
-     'only_on_ac': False, 'auto_gamemode': False},
+# Campos de um modo e modos de fábrica: fonte única em defaults.json (extension/defaults.json, que a extensão também lê).
+# null/ausente = "não mexer" naquele ajuste.
+#   profile          perfil térmico da Acer
+#   fan              auto | max | curve
+#   gpu_offset       off | boost | max | custom (usa gpu_custom, MHz)
+#   power_limit      watts da GPU
+#   cpu_performance  tuned em performance (governor/EPP)
+#   only_on_ac       ignora o modo na bateria
+#   auto_gamemode    só a extensão usa: liga quando o GameMode registra um jogo
+DEFAULTS_PATHS = [
+    os.environ.get('NITRO_DEFAULTS', ''),
+    os.path.expanduser('~/.local/share/nitro/defaults.json'),
+    os.path.expanduser('~/.local/share/gnome-shell/extensions/nitro@eltobsjr.gmail.com/defaults.json'),
 ]
+
+
+def load_defaults():
+    for p in DEFAULTS_PATHS:
+        if p and os.path.isfile(p):
+            with open(p) as f:
+                d = json.load(f)
+            return d['fields'], [{**d['fields'], 'name': b['id'], **b} for b in d['builtin']]
+    raise SystemExit('defaults.json não encontrado (rode o install.sh)')
+
+
+FIELDS, BUILTIN = load_defaults()
 
 
 def load_modes():
@@ -84,11 +95,13 @@ def run(*cmd):
 
 
 def on_ac():
-    for p in ('ACAD', 'AC', 'ADP1'):
-        v = read(f'/sys/class/power_supply/{p}/online')
-        if v is not None:
-            return v == '1'
-    return True
+    seen = False
+    for d in glob.glob('/sys/class/power_supply/*'):
+        if read(f'{d}/type') == 'Mains':
+            seen = True
+            if read(f'{d}/online') == '1':
+                return True
+    return not seen  # sem fonte "Mains" (desktop?): trata como tomada
 
 
 def tuned_active():
@@ -119,6 +132,12 @@ class Steps:
         for f in self.failed:
             print(f, file=sys.stderr)
         return 1 if self.failed else 0
+
+
+def set_fan(steps, mode):
+    if mode == 'curve':
+        return steps.do('ventoinhas', 'pkexec', f'{BIN}/nitro-fan', 'curve', 'on')
+    return steps.do('ventoinhas', 'pkexec', f'{BIN}/nitro-fan', mode)
 
 
 def boot_id():
@@ -152,7 +171,7 @@ def turn_off():
     s.do('overclock', 'pkexec', f'{BIN}/nitro-boost', 'off')
     if st.get('power_limit_set'):  # só desfaz o que o modo mexeu
         s.do('limite de potência', 'pkexec', f'{BIN}/nitro-boost', 'power', 'default')
-    s.do('ventoinhas', 'pkexec', f'{BIN}/nitro-fan', prev.get('fan') if prev.get('fan') in FANS else 'auto')
+    set_fan(s, prev.get('fan') if prev.get('fan') in FANS else 'auto')
     if prev.get('tuned'):
         s.do('cpu', 'tuned-adm', 'profile', prev['tuned'])
     if prev.get('profile'):
@@ -185,11 +204,11 @@ def turn_on(name):
 
     s = Steps()
     if m['cpu_performance']:
-        s.do('cpu', 'tuned-adm', 'profile', 'throughput-performance')  # isto reseta o perfil da Acer; reaplicado abaixo
+        s.do('cpu', 'tuned-adm', 'profile', TUNED_PERF)  # isto mexe no perfil da Acer; reaplicado abaixo
     if m['profile'] or m['cpu_performance']:
         s.do('perfil', 'pkexec', f'{BIN}/nitro-profile', m['profile'] or prev['profile'] or 'balanced')
     if m['fan'] in FANS:
-        s.do('ventoinhas', 'pkexec', f'{BIN}/nitro-fan', m['fan'])
+        set_fan(s, m['fan'])
     go = m['gpu_offset']
     if go == 'custom':
         c = m['gpu_custom']
@@ -204,6 +223,9 @@ def turn_on(name):
 def main():
     args = sys.argv[1:]
     cmd = args[0] if args else ''
+    if cmd == 'defaults' and len(args) == 1:
+        print(json.dumps({'fields': FIELDS, 'builtin': BUILTIN}, ensure_ascii=False))
+        return 0
     if cmd == 'list' and len(args) == 1:
         for m in load_modes():
             print(f'{m["id"]}\t{m["name"]}')
@@ -234,4 +256,5 @@ def main():
         return turn_on(args[1])
 
 
-sys.exit(main())
+if __name__ == '__main__':
+    sys.exit(main())

@@ -1,4 +1,4 @@
-obj-m := nitro_fan.o
+obj-m := nitro_fan.o nitro_battery.o
 KDIR ?= /lib/modules/$(shell uname -r)/build
 
 all:

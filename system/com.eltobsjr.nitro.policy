@@ -32,4 +32,14 @@
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/nitro-fan</annotate>
   </action>
+  <action id="com.eltobsjr.nitro.battery">
+    <description>Mudar o limite de carga da bateria do Acer Nitro</description>
+    <message>Autenticação necessária para mudar o limite de carga da bateria</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/nitro-battery</annotate>
+  </action>
 </policyconfig>

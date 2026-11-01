@@ -8,14 +8,18 @@ UUID="nitro@eltobsjr.gmail.com"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXT_BASE="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions"
 EXT_DEST="$EXT_BASE/$UUID"
-HELPER="/usr/local/bin/nitro-profile"
-BOOST="/usr/local/bin/nitro-boost"
-FAN="/usr/local/bin/nitro-fan"
+BIN=/usr/local/bin
+HELPERS="nitro-profile nitro-boost nitro-fan nitro-battery nitro-fancurve"
 MODE_BIN="$HOME/.local/bin/nitro-mode"
-KMOD_DIR="/lib/modules/$(uname -r)/extra"
-FANCONF="/etc/modules-load.d/nitro_fan.conf"
+DEFAULTS="${XDG_DATA_HOME:-$HOME/.local/share}/nitro/defaults.json"
+MODLOAD="/etc/modules-load.d/nitro_fan.conf"
 POLICY="/usr/share/polkit-1/actions/com.eltobsjr.nitro.policy"
 MODPROBE="/etc/modprobe.d/acer-nitro.conf"
+UNIT="/etc/systemd/system/nitro-fancurve.service"
+TUNED_PROFILE="/etc/tuned/profiles/nitro-performance"
+PPD_CONF="/etc/tuned/ppd.conf"
+VERSION="$(python3 -c "import json;print(json.load(open('$ROOT/extension/metadata.json'))['version-name'])")"
+KMOD_SRC="/usr/src/nitro-kmod-$VERSION"
 
 echo "==> Instalando Nitro Indicator"
 
@@ -37,50 +41,117 @@ command -v pkexec >/dev/null 2>&1 || { echo "ERRO: pkexec não encontrado (sudo 
 command -v nvidia-smi >/dev/null 2>&1 ||
     echo "AVISO: nvidia-smi não encontrado — a seção da GPU fica vazia."
 
-# 2) parte do sistema (root): helper, regra do polkit e predator_v4 no acer_wmi.
+# 2) parte do sistema (root): helpers, polkit, predator_v4 no acer_wmi, serviço da curva.
 #    Só pede senha se algo mudou.
 same() { [ -f "$2" ] && cmp -s "$1" "$2"; }
 WANT_SYSTEM="$(python3 "$SETUP" extra --answers "$ANSWERS" system)"
+system_current() {
+    for h in $HELPERS; do same "$ROOT/system/$h" "$BIN/$h" || return 1; done
+    same "$ROOT/system/acer-nitro-fan.conf" "$MODLOAD" &&
+    same "$ROOT/system/com.eltobsjr.nitro.policy" "$POLICY" &&
+    same "$ROOT/system/acer-nitro.conf" "$MODPROBE" &&
+    same "$ROOT/system/nitro-fancurve.service" "$UNIT"
+}
 if [ "$WANT_SYSTEM" != "true" ]; then
     echo "==> Parte do sistema ignorada (instale depois com ./install.sh)"
-elif same "$ROOT/system/nitro-profile" "$HELPER" &&
-   same "$ROOT/system/nitro-boost" "$BOOST" &&
-   same "$ROOT/system/nitro-fan" "$FAN" &&
-   same "$ROOT/system/acer-nitro-fan.conf" "$FANCONF" &&
-   same "$ROOT/system/com.eltobsjr.nitro.policy" "$POLICY" &&
-   same "$ROOT/system/acer-nitro.conf" "$MODPROBE"; then
+elif system_current; then
     echo "==> Arquivos do sistema já atualizados"
 else
-    echo "==> Instalando helper, polkit e opção do acer_wmi (pede senha de administrador)"
-    sudo install -m 755 "$ROOT/system/nitro-profile" "$HELPER"
-    sudo install -m 755 "$ROOT/system/nitro-boost" "$BOOST"
-    sudo install -m 755 "$ROOT/system/nitro-fan" "$FAN"
-    sudo install -m 644 "$ROOT/system/acer-nitro-fan.conf" "$FANCONF"
+    echo "==> Instalando helpers, polkit, serviço da curva e opção do acer_wmi (pede senha de administrador)"
+    for h in $HELPERS; do sudo install -m 755 "$ROOT/system/$h" "$BIN/$h"; done
+    sudo install -m 644 "$ROOT/system/acer-nitro-fan.conf" "$MODLOAD"
     sudo install -m 644 "$ROOT/system/com.eltobsjr.nitro.policy" "$POLICY"
     sudo install -m 644 "$ROOT/system/acer-nitro.conf" "$MODPROBE"
-    command -v restorecon >/dev/null 2>&1 && sudo restorecon "$HELPER" "$BOOST" "$FAN" "$POLICY" "$MODPROBE" "$FANCONF" || true
+    sudo install -m 644 "$ROOT/system/nitro-fancurve.service" "$UNIT"
+    sudo systemctl daemon-reload
+    command -v restorecon >/dev/null 2>&1 &&
+        sudo restorecon $(for h in $HELPERS; do echo "$BIN/$h"; done) "$POLICY" "$MODPROBE" "$MODLOAD" "$UNIT" || true
 fi
 
-# 2b) módulo nitro_fan (controle das ventoinhas): compila para o kernel atual e instala.
-#     Precisa de kernel-devel e gcc; depois de atualizar o kernel, rode o install.sh de novo.
-if [ "$WANT_SYSTEM" = "true" ]; then
+# 2b) módulos nitro_fan (ventoinhas) e nitro_battery (limite de carga) pelo DKMS: recompilados sozinhos a
+#     cada kernel novo. Sem DKMS (ou se ele falhar), compila só para o kernel atual.
+build_manual() {
     if [ -d "/lib/modules/$(uname -r)/build" ] && command -v make >/dev/null 2>&1; then
-        echo "==> Compilando o módulo nitro_fan para o kernel $(uname -r)"
+        echo "==> Compilando os módulos para o kernel $(uname -r) (sem DKMS: rode de novo após atualizar o kernel)"
         make -C "$ROOT/system/kmod" >/dev/null
-        if ! same "$ROOT/system/kmod/nitro_fan.ko" "$KMOD_DIR/nitro_fan.ko"; then
-            sudo install -D -m 644 "$ROOT/system/kmod/nitro_fan.ko" "$KMOD_DIR/nitro_fan.ko"
-            sudo depmod -a
-        fi
-        [ -e /sys/kernel/nitro_fan/mode ] || sudo modprobe nitro_fan ||
-            echo "AVISO: não deu pra carregar o nitro_fan — controle de ventoinhas indisponível."
+        for m in nitro_fan nitro_battery; do
+            same "$ROOT/system/kmod/$m.ko" "/lib/modules/$(uname -r)/extra/$m.ko" ||
+                sudo install -D -m 644 "$ROOT/system/kmod/$m.ko" "/lib/modules/$(uname -r)/extra/$m.ko"
+        done
+        sudo depmod -a
+        make -C "$ROOT/system/kmod" clean >/dev/null
     else
-        echo "AVISO: sem kernel-devel/make para o kernel atual — controle de ventoinhas indisponível (sudo dnf install kernel-devel gcc make)."
+        echo "AVISO: sem kernel-devel/make para o kernel atual — ventoinhas e limite de carga indisponíveis (sudo dnf install kernel-devel gcc make dkms)."
+        return 1
+    fi
+}
+build_dkms() {
+    if ! command -v dkms >/dev/null 2>&1; then
+        command -v dnf >/dev/null 2>&1 || return 1
+        echo "==> Instalando o DKMS (recompila os módulos a cada atualização do kernel)"
+        sudo dnf install -y dkms kernel-devel-"$(uname -r)" >/dev/null || return 1
+    fi
+    if dkms status -m nitro-kmod -v "$VERSION" 2>/dev/null | grep -q "$(uname -r).*installed" &&
+       diff -rq "$ROOT/system/kmod" "$KMOD_SRC" -x dkms.conf -x teste.sh -x '*.o' -x '*.ko' -x '.*' -x '*.mod*' -x modules.order -x Module.symvers >/dev/null 2>&1; then
+        echo "==> Módulos já instalados pelo DKMS ($VERSION)"
+        return 0
+    fi
+    echo "==> Registrando os módulos no DKMS (nitro-kmod $VERSION)"
+    # versões antigas: as do DKMS e a cópia manual do install.sh antigo
+    for v in $(dkms status -m nitro-kmod 2>/dev/null | sed -n 's#^nitro-kmod/\([^,:]*\).*#\1#p' | sort -u); do
+        sudo dkms remove -m nitro-kmod -v "$v" --all >/dev/null 2>&1 || true
+        sudo rm -rf "/usr/src/nitro-kmod-$v"
+    done
+    sudo rm -f /lib/modules/*/extra/nitro_fan.ko /lib/modules/*/extra/nitro_battery.ko
+    sudo rm -rf "$KMOD_SRC"
+    sudo mkdir -p "$KMOD_SRC"
+    sudo cp "$ROOT/system/kmod/"*.c "$ROOT/system/kmod/Makefile" "$KMOD_SRC/"
+    sed "s/@VERSION@/$VERSION/" "$ROOT/system/kmod/dkms.conf" | sudo tee "$KMOD_SRC/dkms.conf" >/dev/null
+    sudo dkms install -m nitro-kmod -v "$VERSION" >/dev/null
+}
+if [ "$WANT_SYSTEM" = "true" ]; then
+    build_dkms || { echo "AVISO: DKMS indisponível ou falhou; usando a compilação manual."; build_manual; } || true
+    if mokutil --sb-state 2>/dev/null | grep -qi enabled; then
+        echo "AVISO: Secure Boot ligado — o kernel só carrega módulos assinados. O DKMS assina com a chave dele;"
+        echo "       registre-a uma vez com: sudo mokutil --import /var/lib/dkms/mok.pub (e confirme no próximo boot)."
+    fi
+    # Kernel com o acer-wmi-battery oficial (a caminho do mainline em 2026): ele assume o limite de carga
+    # e o nitro_battery fica de fora, senão os dois disputam o mesmo GUID WMI
+    BAT_BLACKLIST=/etc/modprobe.d/nitro-battery-blacklist.conf
+    MODS="nitro_fan nitro_battery"
+    if modinfo acer_wmi_battery >/dev/null 2>&1; then
+        echo "==> O kernel já tem o acer-wmi-battery: o limite de carga fica com ele"
+        [ -f "$BAT_BLACKLIST" ] || echo "blacklist nitro_battery" | sudo tee "$BAT_BLACKLIST" >/dev/null
+        sudo modprobe -r nitro_battery 2>/dev/null || true
+        MODS="nitro_fan"
+    elif [ -f "$BAT_BLACKLIST" ]; then
+        sudo rm -f "$BAT_BLACKLIST"
+    fi
+    # recarrega para valer a versão nova (o nitro_fan devolve as ventoinhas à BIOS ao sair)
+    for m in $MODS; do
+        sudo modprobe -r "$m" 2>/dev/null || true
+        sudo modprobe "$m" 2>/dev/null || echo "AVISO: não deu pra carregar o $m (sudo dmesg | tail)."
+    done
+fi
+
+# 2b') tuned-ppd: o "Desempenho" das Configurações rápidas passa a usar o nitro-performance, que pede o perfil
+#      Acer que o firmware aceita (o throughput-performance pede "performance", recusado com EIO).
+if [ "$WANT_SYSTEM" = "true" ] && [ -f "$PPD_CONF" ] && command -v tuned-adm >/dev/null 2>&1; then
+    if ! same "$ROOT/system/tuned/nitro-performance/tuned.conf" "$TUNED_PROFILE/tuned.conf" ||
+       ! grep -qE '^\s*performance\s*=\s*nitro-performance\s*$' "$PPD_CONF"; then
+        echo "==> Integrando com o tuned-ppd (perfil nitro-performance)"
+        sudo install -D -m 644 "$ROOT/system/tuned/nitro-performance/tuned.conf" "$TUNED_PROFILE/tuned.conf"
+        [ -f "$PPD_CONF.nitro-orig" ] || sudo cp -p "$PPD_CONF" "$PPD_CONF.nitro-orig"
+        sudo sed -i -E '/^\[profiles\]/,/^\[/ s/^(\s*performance\s*=\s*).*/\1nitro-performance/' "$PPD_CONF"
+        sudo systemctl try-restart tuned-ppd.service
     fi
 fi
 
-# 2c) nitro-mode: comando dos modos, sem root (também usado pelos lançadores de jogos)
+# 2c) nitro-mode (modos, também usado pelos lançadores de jogos) e nitro-input (periféricos): sem root
 mkdir -p "$(dirname "$MODE_BIN")"
 install -m 755 "$ROOT/system/nitro-mode" "$MODE_BIN"
+install -m 755 "$ROOT/system/nitro-input" "$(dirname "$MODE_BIN")/nitro-input"  # leitor de controles (sem root)
+install -D -m 644 "$ROOT/extension/defaults.json" "$DEFAULTS"
 
 # 3) recarrega o acer_wmi com predator_v4=1 se ainda não estiver ativo
 if [ "$WANT_SYSTEM" = "true" ] && [ "$(cat /sys/module/acer_wmi/parameters/predator_v4 2>/dev/null)" != "Y" ]; then
@@ -101,6 +172,14 @@ cleanup() { rm -rf "$STAGE" "${OLD:-}" "$ANSWERS"; }
 trap cleanup EXIT
 cp -r "$ROOT/extension/." "$STAGE/"
 chmod 755 "$STAGE"
+# traduções e schema compilados na cópia (o repositório guarda só as fontes)
+for po in "$ROOT"/po/*.po; do
+    lang="$(basename "$po" .po)"
+    mkdir -p "$STAGE/locale/$lang/LC_MESSAGES"
+    msgfmt -o "$STAGE/locale/$lang/LC_MESSAGES/$UUID.mo" "$po" 2>/dev/null ||
+        echo "AVISO: msgfmt não encontrado — a extensão fica em inglês (sudo dnf install gettext)."
+done
+glib-compile-schemas "$STAGE/schemas"
 if [ -d "$EXT_DEST" ]; then
     OLD="$EXT_BASE/.$UUID.old.$$"
     mv "$EXT_DEST" "$OLD"

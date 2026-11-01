@@ -1,0 +1,164 @@
+#!/usr/bin/python3
+"""Leitor de controles (gamepads) para a extensão Nitro: lê o evdev e manda JSON, uma linha por evento.
+
+Uso: nitro-input            roda até o stdin fechar (a extensão abre só com o menu ou o testador aberto)
+     nitro-input --list     lista os controles e sai
+Sem root: o systemd (uaccess) já dá ao usuário logado acesso aos nós de joystick. Não lê teclado nem mouse
+(esses o GNOME Shell entrega à extensão direto, e só enquanto o menu ou o testador estão abertos).
+
+Saída:
+  {"t": "add", "dev": "event23", "name": "...", "bus": "usb", "axes": {"0": [min, max], ...},
+   "buttons": [304, ...], "pressed": [304], "abs": {"0": valor}}
+  {"t": "key", "dev": "event23", "code": 304, "value": 1}
+  {"t": "abs", "dev": "event23", "code": 0, "value": -1200}
+  {"t": "remove", "dev": "event23"}
+"""
+import fcntl
+import json
+import os
+import re
+import select
+import struct
+import sys
+
+EV_KEY, EV_ABS = 0x01, 0x03
+EVENT = struct.Struct('llHHi')  # struct input_event (timeval + type + code + value)
+ABSINFO = struct.Struct('6i')   # value, minimum, maximum, fuzz, flat, resolution
+KEY_MAX, ABS_MAX = 0x2ff, 0x3f
+BUS = {0x03: 'usb', 0x05: 'bluetooth', 0x06: 'virtual', 0x19: 'host'}
+RESCAN_S = 2
+
+
+def ioc_read(nr, size):
+    return (2 << 30) | (size << 16) | (ord('E') << 8) | nr
+
+
+def bits(fd, nr, maxbit):
+    buf = bytearray((maxbit + 8) // 8)
+    fcntl.ioctl(fd, ioc_read(nr, len(buf)), buf)
+    return [i for i in range(maxbit + 1) if buf[i // 8] >> (i % 8) & 1]
+
+
+def gamepads(text=None):
+    """{eventN: (nome, barramento)} dos dispositivos com nó de joystick (jsN)."""
+    out = {}
+    if text is None:
+        try:
+            text = open('/proc/bus/input/devices').read()
+        except OSError:
+            return out
+    for block in text.split('\n\n'):
+        handlers = re.search(r'^H: Handlers=(.*)$', block, re.M)
+        if not handlers or not re.search(r'\bjs\d+\b', handlers.group(1)):
+            continue
+        ev = re.search(r'\b(event\d+)\b', handlers.group(1))
+        name = re.search(r'^N: Name="(.*)"$', block, re.M)
+        bus = re.search(r'^I: Bus=([0-9a-f]+)', block, re.M)
+        if ev:
+            out[ev.group(1)] = (name.group(1) if name else ev.group(1), BUS.get(int(bus.group(1), 16), 'other') if bus else 'other')
+    return out
+
+
+class Pad:
+    def __init__(self, dev, name, bus):
+        self.dev, self.name, self.bus = dev, name, bus
+        self.fd = os.open(f'/dev/input/{dev}', os.O_RDONLY | os.O_NONBLOCK)
+        try:
+            self.buttons = bits(self.fd, 0x20 + EV_KEY, KEY_MAX)
+            self.pressed = bits(self.fd, 0x18, KEY_MAX)  # EVIOCGKEY: botões apertados agora
+            self.axes, self.abs = {}, {}
+            for code in bits(self.fd, 0x20 + EV_ABS, ABS_MAX):
+                buf = bytearray(ABSINFO.size)
+                fcntl.ioctl(self.fd, ioc_read(0x40 + code, ABSINFO.size), buf)
+                value, lo, hi = ABSINFO.unpack(buf)[:3]
+                self.axes[str(code)] = [lo, hi]
+                self.abs[str(code)] = value
+        except OSError:
+            os.close(self.fd)
+            raise
+
+    def hello(self):
+        return {'t': 'add', 'dev': self.dev, 'name': self.name, 'bus': self.bus, 'axes': self.axes,
+                'buttons': self.buttons, 'pressed': [b for b in self.pressed if b in self.buttons], 'abs': self.abs}
+
+    def read(self):
+        out = []
+        try:
+            data = os.read(self.fd, EVENT.size * 64)
+        except BlockingIOError:
+            return out
+        for i in range(0, len(data) - EVENT.size + 1, EVENT.size):
+            _s, _us, typ, code, value = EVENT.unpack_from(data, i)
+            if typ == EV_KEY and value in (0, 1):  # 2 = repetição automática
+                out.append({'t': 'key', 'dev': self.dev, 'code': code, 'value': value})
+            elif typ == EV_ABS:
+                out.append({'t': 'abs', 'dev': self.dev, 'code': code, 'value': value})
+        return out
+
+
+def emit(obj):
+    sys.stdout.write(json.dumps(obj, separators=(',', ':')) + '\n')
+
+
+def main():
+    if sys.argv[1:] == ['--list']:
+        for dev, (name, bus) in gamepads().items():
+            try:
+                p = Pad(dev, name, bus)
+                print(json.dumps(p.hello(), ensure_ascii=False))
+                os.close(p.fd)
+            except OSError as e:
+                print(f'{dev}: {name}: sem acesso ({e.strerror})', file=sys.stderr)
+        return 0
+    if sys.argv[1:]:
+        print(__doc__, file=sys.stderr)
+        return 2
+
+    pads = {}
+    unreadable = set()
+
+    def rescan():
+        found = gamepads()
+        for dev in list(pads):
+            if dev not in found:
+                os.close(pads.pop(dev).fd)
+                emit({'t': 'remove', 'dev': dev})
+        for dev, (name, bus) in found.items():
+            if dev in pads or dev in unreadable:
+                continue
+            try:
+                pads[dev] = Pad(dev, name, bus)
+                emit(pads[dev].hello())
+            except OSError:
+                unreadable.add(dev)  # sem permissão (sem uaccess): não fica tentando
+        emit({'t': 'scan', 'count': len(pads)})
+        sys.stdout.flush()
+
+    rescan()
+    while True:
+        fds = [sys.stdin] + [p.fd for p in pads.values()]
+        try:
+            ready, _, _ = select.select(fds, [], [], RESCAN_S)
+        except InterruptedError:
+            continue
+        if sys.stdin in ready and not sys.stdin.buffer.read1(4096):
+            return 0  # a extensão fechou o pipe: acabou
+        if not ready:
+            rescan()
+            continue
+        for p in list(pads.values()):
+            if p.fd in ready:
+                try:
+                    for ev in p.read():
+                        emit(ev)
+                except OSError:  # desconectou
+                    os.close(pads.pop(p.dev).fd)
+                    emit({'t': 'remove', 'dev': p.dev})
+        sys.stdout.flush()
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except (BrokenPipeError, KeyboardInterrupt):
+        sys.exit(0)

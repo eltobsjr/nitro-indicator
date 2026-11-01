@@ -11,3 +11,7 @@ system/kmod/.*.cmd
 system/kmod/.cache.mk
 system/kmod/Module.symvers
 system/kmod/modules.order
+extension/locale/
+extension/schemas/gschemas.compiled
+__pycache__/
+system/kmod/.*.d

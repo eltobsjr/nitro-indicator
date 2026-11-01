@@ -1,0 +1,199 @@
+#!/usr/bin/python3
+"""Curva de ventoinha do Acer Nitro: lê as temperaturas e ajusta a velocidade no modo custom. Roda como serviço root.
+
+Uso: nitro-fancurve              roda (systemd: nitro-fancurve.service; SIGHUP relê a config)
+     nitro-fancurve --check JSON confere uma curva sem aplicar (sai 0 se válida)
+Config em /etc/nitro/fan-curve.json: {"points": [[temp °C, %], ...]}, de 2 a 8 pontos, temperaturas crescentes.
+Ventoinha da CPU segue a CPU; a da GPU segue a maior entre CPU e GPU (a GPU só é lida se já estiver acordada).
+Ao sair, devolve as ventoinhas à BIOS (auto).
+"""
+import glob
+import json
+import os
+import signal
+import subprocess
+import sys
+import time
+
+CONF = '/etc/nitro/fan-curve.json'
+STATE = '/run/nitro/fancurve'
+INTERVAL = 2
+DROP_PER_TICK = 5    # desce devagar (no máximo 5% a cada leitura) para não ficar oscilando
+PANIC_TEMP = 92      # acima disso, 100% não importa a curva
+DEFAULT = {'points': [[50, 25], [60, 35], [70, 55], [80, 80], [88, 100]]}
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return None
+
+
+def write(path, value):
+    with open(path, 'w') as f:
+        f.write(str(value))
+
+
+def validate(conf):
+    pts = conf.get('points') if isinstance(conf, dict) else None
+    if not isinstance(pts, list) or not 2 <= len(pts) <= 8:
+        raise ValueError('a curva precisa de 2 a 8 pontos')
+    last_t = -1
+    for p in pts:
+        if not (isinstance(p, list) and len(p) == 2 and all(isinstance(v, int) for v in p)):
+            raise ValueError(f'ponto inválido: {p!r}')
+        t, pct = p
+        if not 30 <= t <= 100 or not 0 <= pct <= 100:
+            raise ValueError(f'fora da faixa (30–100 °C, 0–100 %): {p!r}')
+        if t <= last_t:
+            raise ValueError('as temperaturas precisam ser crescentes')
+        last_t = t
+    return [tuple(p) for p in pts]
+
+
+def interpolate(points, temp):
+    if temp >= PANIC_TEMP:
+        return 100
+    if temp <= points[0][0]:
+        return points[0][1]
+    for (t0, p0), (t1, p1) in zip(points, points[1:]):
+        if temp <= t1:
+            return round(p0 + (p1 - p0) * (temp - t0) / (t1 - t0))
+    return points[-1][1]
+
+
+def hwmon(name):
+    for d in glob.glob('/sys/class/hwmon/hwmon*'):
+        if read(f'{d}/name') == name:
+            return d
+    return None
+
+
+def cpu_temp():
+    d = hwmon('coretemp') or hwmon('k10temp')
+    v = read(f'{d}/temp1_input') if d else None
+    return int(v) // 1000 if v else None
+
+
+def gpu_temp():
+    for dev in glob.glob('/sys/bus/pci/devices/*'):
+        if read(f'{dev}/vendor') == '0x10de' and (read(f'{dev}/class') or '').startswith('0x03'):
+            if read(f'{dev}/power/runtime_status') != 'active':
+                return None  # dormindo: não acorda a placa só para ler
+            try:
+                out = subprocess.run(['nvidia-smi', '--query-gpu=temperature.gpu', '--format=csv,noheader,nounits'],
+                                     capture_output=True, text=True, timeout=3).stdout
+                return int(out.split()[0])
+            except (OSError, subprocess.TimeoutExpired, ValueError, IndexError):
+                return None
+    return None
+
+
+class Fans:
+    """Mesmos dois caminhos do nitro-fan: pwm do acer-wmi quando existe, senão o módulo nitro_fan."""
+
+    def __init__(self):
+        self.h = None
+        d = hwmon('acer')
+        if d and os.path.exists(f'{d}/pwm1_enable'):
+            self.h = d
+        elif not os.path.exists('/sys/kernel/nitro_fan/mode'):
+            subprocess.run(['modprobe', 'nitro_fan'], check=False)
+            if not os.path.exists('/sys/kernel/nitro_fan/mode'):
+                raise SystemExit('sem controle de ventoinha (nem pwm no hwmon acer, nem módulo nitro_fan)')
+
+    def mode(self, m):
+        if self.h:
+            v = {'auto': 2, 'custom': 1}[m]
+            write(f'{self.h}/pwm1_enable', v)
+            write(f'{self.h}/pwm2_enable', v)
+        else:
+            write('/sys/kernel/nitro_fan/mode', m)
+
+    def speed(self, cpu, gpu):
+        if self.h:
+            write(f'{self.h}/pwm1', cpu * 255 // 100)
+            write(f'{self.h}/pwm2', gpu * 255 // 100)
+        else:
+            write('/sys/kernel/nitro_fan/cpu_speed', cpu)
+            write('/sys/kernel/nitro_fan/gpu_speed', gpu)
+
+
+def load():
+    try:
+        with open(CONF) as f:
+            return validate(json.load(f))
+    except (OSError, ValueError) as e:
+        print(f'config ({CONF}): {e}; usando a curva padrão', file=sys.stderr)
+        return validate(DEFAULT)
+
+
+def step(current, target):
+    return target if target >= current else max(target, current - DROP_PER_TICK)
+
+
+def run():
+    fans = Fans()
+    points = load()
+    stop = False
+
+    def on_term(*_):
+        nonlocal stop
+        stop = True
+
+    def on_hup(*_):
+        nonlocal points
+        points = load()
+
+    signal.signal(signal.SIGTERM, on_term)
+    signal.signal(signal.SIGINT, on_term)
+    signal.signal(signal.SIGHUP, on_hup)
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    write(STATE, 'on')
+    cur = [None, None]
+    try:
+        fans.mode('custom')
+        while not stop:
+            c = cpu_temp()
+            g = gpu_temp()
+            if c is None:  # sem leitura de temperatura não dá pra seguir curva: deixa com a BIOS
+                raise SystemExit('sem leitura da temperatura da CPU')
+            want = [interpolate(points, c), interpolate(points, max(c, g or 0))]
+            new = [w if p is None else step(p, w) for p, w in zip(cur, want)]
+            if new != cur:
+                fans.speed(*new)
+                cur = new
+            time.sleep(INTERVAL)
+    finally:
+        try:
+            fans.mode('auto')
+        finally:
+            try:
+                os.unlink(STATE)
+            except OSError:
+                pass
+
+
+def main():
+    args = sys.argv[1:]
+    if len(args) == 2 and args[0] == '--check':
+        try:
+            validate(json.loads(args[1]))
+        except ValueError as e:
+            print(e, file=sys.stderr)
+            return 2
+        return 0
+    if args:
+        print(__doc__, file=sys.stderr)
+        return 2
+    if os.geteuid() != 0:
+        print('precisa de root (rode pelo serviço nitro-fancurve)', file=sys.stderr)
+        return 3
+    run()
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
