@@ -127,6 +127,7 @@ class Ui:
             if not raw: return default
             if raw in ('s', 'sim', 'y', 'yes'): return True
             if raw in ('n', 'nao', 'não', 'no'): return False
+            self.say('   Responda s ou n.')
     def text(self, title, default, check=None):
         if not self.on: return default
         while True:

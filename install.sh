@@ -69,7 +69,6 @@ else
     # UPower lê o limite de carga do hwdb: com isso o GNOME enxerga o limite do nitro_battery
     sudo install -D -m 644 "$ROOT/system/61-nitro-battery.hwdb" "$HWDB"
     sudo systemd-hwdb update && sudo udevadm trigger -s power_supply || true
-    sudo systemctl try-restart upower.service || true
     command -v restorecon >/dev/null 2>&1 &&
         sudo restorecon $(for h in $HELPERS; do echo "$BIN/$h"; done) "$POLICY" "$MODPROBE" "$MODLOAD" "$UNIT" || true
 fi
@@ -138,6 +137,8 @@ if [ "$WANT_SYSTEM" = "true" ]; then
         sudo modprobe -r "$m" 2>/dev/null || true
         sudo modprobe "$m" 2>/dev/null || echo "AVISO: não deu pra carregar o $m (sudo dmesg | tail)."
     done
+    # o UPower só vê o limite de carga se olhar a bateria depois que o nitro_battery carregou
+    sudo systemctl try-restart upower.service || true
 fi
 
 # 2b') tuned-ppd: o "Desempenho" das Configurações rápidas passa a usar o nitro-performance, que pede o perfil
