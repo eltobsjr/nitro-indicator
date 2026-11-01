@@ -189,4 +189,20 @@ eq('soltar nunca sobrepõe', [classic, tiles].every(base => base.every(it => {
     return layout.parseItems(layout.serialize(out)).length === out.length;
 })), true);
 
+// layouts com nome
+eq('mesmos itens em outra ordem = mesmo layout', layout.sameItems([...classic].reverse(), classic), true);
+eq('layout mexido ≠ original', layout.sameItems(layout.drop(classic, {id: 'profile', size: 'full', r: 2, c: 0}), classic), false);
+let named = layout.saveNamed([], '  Trabalho ', tiles);
+named = layout.saveNamed(named, 'Jogo', classic);
+eq('salvar: nome sem espaços nas pontas, na ordem', named.map(l => l.name), ['Trabalho', 'Jogo']);
+named = layout.saveNamed(named, 'trabalho', classic);
+eq('salvar com nome existente substitui no lugar', [named.length, named[0].name, layout.sameItems(named[0].items, classic)], [2, 'trabalho', true]);
+eq('nome vazio não salva', layout.saveNamed(named, '   ', tiles), named);
+eq('renomear', layout.renameNamed(named, 'Jogo', 'Jogos').map(l => l.name), ['trabalho', 'Jogos']);
+eq('renomear para nome de outro é recusado', layout.renameNamed(named, 'Jogo', 'TRABALHO'), named);
+const round = layout.parseSaved(layout.serializeSaved(named));
+eq('ida e volta pelo JSON', [round.map(l => l.name), layout.sameItems(round[1].items, classic)], [['trabalho', 'Jogo'], true]);
+eq('JSON quebrado ou estranho vira lista vazia', [layout.parseSaved('{'), layout.parseSaved('{}'), layout.parseSaved('[{"name":"x","items":[]}]')], [[], [], []]);
+eq('nome repetido no JSON: fica o primeiro', layout.parseSaved('[{"name":"A","items":["cpu:1x1:0:0"]},{"name":"a","items":["fan1:1x1:0:0"]}]').length, 1);
+
 System.exit(failed ? 1 : 0);

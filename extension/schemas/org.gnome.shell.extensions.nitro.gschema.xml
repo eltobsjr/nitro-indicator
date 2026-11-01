@@ -6,6 +6,16 @@
       <summary>Menu items in the grid</summary>
       <description>Each entry is id:size:row:column (4 columns). Full-width sizes (full, compact, grid, row, normal, short) keep the classic look; the others are tiles (1x1, 2x1, 2x2, 4x2). Items not listed are not shown.</description>
     </key>
+    <key name="grid-custom" type="as">
+      <default>[]</default>
+      <summary>Custom layout</summary>
+      <description>The layout you edited in the lab (same format as grid-items). Kept apart so picking a ready-made layout does not lose it.</description>
+    </key>
+    <key name="saved-layouts" type="s">
+      <default>'[]'</default>
+      <summary>Named layouts</summary>
+      <description>JSON list of {"name": text, "items": [id:size:row:column, ...]} saved in the lab.</description>
+    </key>
     <key name="grid-gap" type="i">
       <range min="0" max="24"/>
       <default>12</default>

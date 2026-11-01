@@ -4,12 +4,13 @@
 // volta para a gaveta; clique num item para o tamanho; teclado: setas movem, + e − trocam o tamanho, Delete
 // tira, Enter abre as opções. Grava no GSettings na hora (as regras ficam em layout.js, testadas à parte).
 import Gdk from 'gi://Gdk';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 
 import {
     ITEMS, GROUPS, PRESETS, PANEL_ITEMS, ALL_PANEL, COLS, sizeOf, parseItems, serialize, drop, remove, resize,
-    firstFree, cleanPanel,
+    firstFree, cleanPanel, sameItems, parseSaved, serializeSaved, saveNamed, renameNamed,
 } from './layout.js';
 
 // Peças com título que dá para esconder
@@ -81,6 +82,7 @@ const CSS = `
 .lab-preset { padding: 8px 10px; }
 .lab-preset-title { font-weight: 700; }
 .lab-preset-sub { font-size: 0.8em; opacity: 0.7; }
+.lab-preset-on { box-shadow: inset 0 0 0 2px @accent_bg_color; }
 .lab-group { font-size: 0.72em; font-weight: 700; letter-spacing: 0.06em; opacity: 0.6; margin-top: 4px; }
 .lab-sizes { font-size: 0.75em; opacity: 0.6; }
 `;
@@ -448,7 +450,21 @@ export function buildLab(page, settings, _, Adw) {
 
     // ---- estado (sempre lido do GSettings: o laboratório é uma vista dele) ----
     const items = () => parseItems(settings.get_strv('grid-items'));
-    const save = list => settings.set_strv('grid-items', serialize(list));
+    const custom = () => parseItems(settings.get_strv('grid-custom'));
+    const saved = () => parseSaved(settings.get_string('saved-layouts'));
+    const setSaved = list => settings.set_string('saved-layouts', serializeSaved(list));
+    // editar no laboratório: vira o "Personalizado" (guardado à parte, um layout pronto não o apaga) e vale no menu
+    const save = list => {
+        const s = serialize(list);
+        settings.set_strv('grid-custom', s);
+        settings.set_strv('grid-items', s);
+    };
+    // escolher um layout pronto ou salvo: só muda o menu
+    const apply = list => settings.set_strv('grid-items', serialize(list));
+    // vindo de uma versão sem o Personalizado: o layout atual, se não for pronto nem salvo, passa a ser ele
+    if (!custom().length && !PRESETS(_).some(p => sameItems(p.items, items())) && !saved().some(l => sameItems(l.items, items())))
+        settings.set_strv('grid-custom', serialize(items()));
+    let lastSaved = '';  // nome do último layout salvo aplicado (sugestão no "Salvar como")
     const gap = () => settings.get_int('grid-gap');
     const panel = () => cleanPanel(settings.get_strv('panel-items'));
     const savePanel = list => settings.set_strv('panel-items', list);
@@ -468,16 +484,105 @@ export function buildLab(page, settings, _, Adw) {
 
     left.append(label(_('Ready-made layouts'), 'lab-col-title'));
     const presets = new Gtk.FlowBox({selection_mode: Gtk.SelectionMode.NONE, max_children_per_line: 2, column_spacing: 6, row_spacing: 6, homogeneous: true});
-    for (const p of PRESETS(_)) {
-        const b = new Gtk.Button({css_classes: ['lab-preset'], tooltip_text: p.subtitle});
+    const presetButton = (title, subtitle, onClick) => {
+        const b = new Gtk.Button({css_classes: ['lab-preset'], tooltip_text: subtitle});
         const inner = vbox(0);
-        inner.append(label(p.title, 'lab-preset-title'));
-        inner.append(label(p.subtitle, 'lab-preset-sub', {wrap: true, max_width_chars: 16}));
+        inner.append(label(title, 'lab-preset-title'));
+        inner.append(label(subtitle, 'lab-preset-sub', {wrap: true, max_width_chars: 16}));
         b.set_child(inner);
-        b.connect('clicked', () => save(p.items));
+        b.connect('clicked', onClick);
         presets.append(b);
-    }
+        return b;
+    };
+    const presetButtons = PRESETS(_).map(p => ({p, b: presetButton(p.title, p.subtitle, () => apply(p.items))}));
+    const customButton = presetButton(_('Custom'), _('Your last edit, kept on its own'), () => {
+        if (custom().length)
+            apply(custom());
+    });
     left.append(presets);
+
+    // ---- layouts com nome ----
+    left.append(label(_('My layouts'), 'lab-col-title', {margin_top: 6}));
+    const mine = vbox(4);
+    left.append(mine);
+    const saveAs = new Gtk.Button({label: _('Save as…'), css_classes: ['suggested-action'], halign: Gtk.Align.START,
+        tooltip_text: _('Save the grid as it is now, with a name')});
+    left.append(saveAs);
+
+    const popAt = (anchor, build) => {
+        const pop = new Gtk.Popover({has_arrow: true});
+        pop.set_parent(anchor);
+        const box = vbox(6);
+        for (const m of ['top', 'bottom', 'start', 'end'])
+            box[`set_margin_${m}`](10);
+        build(box, pop);
+        pop.set_child(box);
+        pop.connect('closed', () => pop.unparent());
+        pop.popup();
+    };
+    // campo de nome + botão; check(nome) → [texto do botão, pode?] (Salvar / Substituir / Renomear / nome em uso)
+    const nameField = (box, pop, initial, check, done) => {
+        const entry = new Gtk.Entry({text: initial, placeholder_text: _('Layout name'), max_length: 40, width_chars: 22});
+        const btn = new Gtk.Button({css_classes: ['suggested-action']});
+        const sync = () => {
+            const t = entry.get_text().trim();
+            const [text, ok] = check(t);
+            btn.set_label(text);
+            btn.set_sensitive(!!t && ok);
+        };
+        const go = () => {
+            if (!btn.get_sensitive())
+                return;
+            pop.popdown();
+            done(entry.get_text());
+        };
+        entry.connect('changed', sync);
+        entry.connect('activate', go);
+        btn.connect('clicked', go);
+        sync();
+        box.append(entry);
+        box.append(btn);
+        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            entry.grab_focus();
+            return GLib.SOURCE_REMOVE;
+        });
+    };
+    const exists = name => saved().some(l => l.name.toLowerCase() === name.toLowerCase());
+    saveAs.connect('clicked', () => popAt(saveAs, (box, pop) => {
+        box.append(label(_('Save the grid as'), 'lab-col-title'));
+        nameField(box, pop, lastSaved, t => [t && exists(t) ? _('Replace') : _('Save'), true], name => {
+            lastSaved = name.trim();
+            setSaved(saveNamed(saved(), name, items()));
+        });
+    }));
+    const layoutMenu = (anchor, l) => popAt(anchor, (box, pop) => {
+        box.append(label(l.name, 'lab-col-title'));
+        nameField(box, pop, l.name, t => (t.toLowerCase() !== l.name.toLowerCase() && exists(t) ? [_('Name already in use'), false] : [_('Rename'), true]),
+            name => {
+                const next = renameNamed(saved(), l.name, name);
+                if (lastSaved === l.name)
+                    lastSaved = name.trim();
+                setSaved(next);
+            });
+        const update = new Gtk.Button({label: _('Replace with the current grid')});
+        update.connect('clicked', () => {
+            pop.popdown();
+            setSaved(saveNamed(saved(), l.name, items()));
+        });
+        box.append(update);
+        const del = new Gtk.Button({label: _('Delete'), css_classes: ['destructive-action']});
+        let armed = false;
+        del.connect('clicked', () => {
+            if (!armed) {
+                armed = true;
+                del.set_label(_('Click again to delete'));
+                return;
+            }
+            pop.popdown();
+            setSaved(saved().filter(x => x.name !== l.name));
+        });
+        box.append(del);
+    });
 
     left.append(label(_('Space between items'), 'lab-col-title', {margin_top: 6}));
     const gapRow = hbox(8);
@@ -856,6 +961,36 @@ export function buildLab(page, settings, _, Adw) {
         }
         canvas.set_size_request(W, geo.height);
 
+        // layout ativo: um pronto, um salvo, ou o Personalizado
+        const savedList = saved();
+        const activePreset = presetButtons.find(x => sameItems(x.p.items, list));
+        const activeSaved = activePreset ? null : savedList.find(l => sameItems(l.items, list));
+        for (const x of presetButtons)
+            x.b[x === activePreset ? 'add_css_class' : 'remove_css_class']('lab-preset-on');
+        customButton[!activePreset && !activeSaved ? 'add_css_class' : 'remove_css_class']('lab-preset-on');
+        customButton.set_sensitive(custom().length > 0);
+        clear(mine);
+        for (const l of savedList) {
+            const row = hbox(4);
+            const b = new Gtk.Button({css_classes: ['lab-preset'], hexpand: true,
+                tooltip_text: _('%d items').replace('%d', l.items.length)});
+            b.set_child(label(l.name, 'lab-preset-title', {ellipsize: 3}));
+            if (l === activeSaved)
+                b.add_css_class('lab-preset-on');
+            b.connect('clicked', () => {
+                lastSaved = l.name;
+                apply(l.items);
+            });
+            const edit = new Gtk.Button({icon_name: 'document-edit-symbolic', css_classes: ['flat'], valign: Gtk.Align.CENTER,
+                tooltip_text: _('Rename, replace or delete')});
+            edit.connect('clicked', () => layoutMenu(edit, l));
+            row.append(b);
+            row.append(edit);
+            mine.append(row);
+        }
+        if (!savedList.length)
+            mine.append(label(_('Nothing saved yet. Arrange the grid and press Save as…'), 'lab-col-desc', {wrap: true}));
+
         // gaveta, por grupo
         clear(drawer);
         const placed = new Set(list.map(i => i.id));
@@ -924,7 +1059,7 @@ export function buildLab(page, settings, _, Adw) {
         }
     };
 
-    const ids = ['grid-items', 'grid-gap', 'panel-items', 'hidden-titles'].map(k => settings.connect(`changed::${k}`, render));
+    const ids = ['grid-items', 'grid-custom', 'saved-layouts', 'grid-gap', 'panel-items', 'hidden-titles'].map(k => settings.connect(`changed::${k}`, render));
     page.connect('destroy', () => ids.forEach(i => settings.disconnect(i)));
     render();
 }

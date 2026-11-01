@@ -14,70 +14,70 @@ msgstr ""
 msgid "Laptop keyboard"
 msgstr "Teclado do notebook"
 
-#: extension/extension.js:54 extension/lab.js:145 extension/lab.js:215
-#: extension/lab.js:330 extension/lab.js:368 extension/pieces.js:13
+#: extension/extension.js:54 extension/lab.js:147 extension/lab.js:217
+#: extension/lab.js:332 extension/lab.js:370 extension/pieces.js:13
 #: extension/prefs.js:46
 msgid "Eco"
 msgstr "Eco"
 
-#: extension/extension.js:55 extension/lab.js:145 extension/lab.js:330
+#: extension/extension.js:55 extension/lab.js:147 extension/lab.js:332
 #: extension/pieces.js:13 extension/prefs.js:47
 msgid "Quiet"
 msgstr "Silencioso"
 
-#: extension/extension.js:56 extension/lab.js:146 extension/lab.js:331
+#: extension/extension.js:56 extension/lab.js:148 extension/lab.js:333
 #: extension/pieces.js:13 extension/prefs.js:48
 msgid "Balanced"
 msgstr "Equilibrado"
 
-#: extension/extension.js:57 extension/lab.js:146 extension/lab.js:215
-#: extension/lab.js:326 extension/lab.js:331 extension/lab.js:368
+#: extension/extension.js:57 extension/lab.js:148 extension/lab.js:217
+#: extension/lab.js:328 extension/lab.js:333 extension/lab.js:370
 #: extension/pieces.js:13 extension/prefs.js:49
 msgid "Performance"
 msgstr "Performance"
 
-#: extension/extension.js:62 extension/lab.js:150 extension/prefs.js:245
+#: extension/extension.js:62 extension/lab.js:152 extension/prefs.js:245
 msgid "Auto"
 msgstr "Automático"
 
-#: extension/extension.js:63 extension/lab.js:150 extension/lab.js:345
+#: extension/extension.js:63 extension/lab.js:152 extension/lab.js:347
 #: extension/prefs.js:245
 msgid "Max"
 msgstr "Máximo"
 
-#: extension/extension.js:64 extension/lab.js:150 extension/prefs.js:245
+#: extension/extension.js:64 extension/lab.js:152 extension/prefs.js:245
 msgid "Curve"
 msgstr "Curva"
 
-#: extension/extension.js:297 extension/lab.js:144 extension/lab.js:323
-#: extension/lab.js:328 extension/layout.js:17 extension/prefs.js:239
+#: extension/extension.js:297 extension/lab.js:146 extension/lab.js:325
+#: extension/lab.js:330 extension/layout.js:17 extension/prefs.js:239
 #: extension/tiles.js:231 extension/tiles.js:233 extension/tiles.js:244
 #: extension/tiles.js:247
 msgid "Profile"
 msgstr "Perfil"
 
-#: extension/extension.js:308 extension/extension.js:824 extension/lab.js:149
-#: extension/lab.js:249 extension/lab.js:341 extension/layout.js:19
+#: extension/extension.js:308 extension/extension.js:824 extension/lab.js:151
+#: extension/lab.js:251 extension/lab.js:343 extension/layout.js:19
 #: extension/prefs.js:244 extension/tiles.js:251 extension/tiles.js:253
 #: extension/tiles.js:268
 msgid "Fans"
 msgstr "Ventoinhas"
 
-#: extension/extension.js:327 extension/extension.js:335 extension/lab.js:153
+#: extension/extension.js:327 extension/extension.js:335 extension/lab.js:155
 #: extension/tiles.js:271
 msgid "Limit charge to 80%"
 msgstr "Limitar a carga em 80%"
 
-#: extension/extension.js:341 extension/lab.js:156 extension/layout.js:23
+#: extension/extension.js:341 extension/lab.js:158 extension/layout.js:23
 msgid "Sensors"
 msgstr "Sensores"
 
-#: extension/extension.js:346 extension/lab.js:163 extension/lab.js:309
+#: extension/extension.js:346 extension/lab.js:165 extension/lab.js:311
 #: extension/layout.js:29 extension/tiles.js:194
 msgid "Fan 1"
 msgstr "Ventoinha 1"
 
-#: extension/extension.js:346 extension/lab.js:163 extension/lab.js:309
+#: extension/extension.js:346 extension/lab.js:165 extension/lab.js:311
 #: extension/layout.js:31 extension/tiles.js:194
 msgid "Fan 2"
 msgstr "Ventoinha 2"
@@ -94,7 +94,7 @@ msgstr "LIMITANDO"
 msgid "POWER LIMIT"
 msgstr "NO LIMITE"
 
-#: extension/extension.js:750 extension/lab.js:201
+#: extension/extension.js:750 extension/lab.js:203
 msgid "Active"
 msgstr "Ativa"
 
@@ -111,7 +111,7 @@ msgstr "Uso %s"
 msgid "Keep"
 msgstr "Manter"
 
-#: extension/extension.js:789 extension/extension.js:1174 extension/lab.js:319
+#: extension/extension.js:789 extension/extension.js:1174 extension/lab.js:321
 #, javascript-format
 msgid "health %d%%"
 msgstr "saúde %d%%"
@@ -135,7 +135,7 @@ msgstr "%d–%d °C · últimos 3 min"
 msgid "collecting…"
 msgstr "coletando…"
 
-#: extension/extension.js:825 extension/lab.js:249 extension/layout.js:21
+#: extension/extension.js:825 extension/lab.js:251 extension/layout.js:21
 #: extension/prefs.js:145
 msgid "Charge limit"
 msgstr "Limite de carga"
@@ -150,13 +150,13 @@ msgstr "Autorização cancelada."
 msgid "Could not switch to %s"
 msgstr "Não deu pra ativar %s"
 
-#: extension/extension.js:1064 extension/lab.js:215 extension/lab.js:368
-#: extension/lab.js:531 extension/pieces.js:94 extension/prefs.js:107
+#: extension/extension.js:1064 extension/lab.js:217 extension/lab.js:370
+#: extension/lab.js:636 extension/pieces.js:94 extension/prefs.js:107
 #: extension/tiles.js:292
 msgid "Plugged in"
 msgstr "Na tomada"
 
-#: extension/extension.js:1065 extension/lab.js:215 extension/lab.js:368
+#: extension/extension.js:1065 extension/lab.js:217 extension/lab.js:370
 #: extension/pieces.js:94 extension/prefs.js:107 extension/tiles.js:223
 #: extension/tiles.js:292
 msgid "On battery"
@@ -220,7 +220,7 @@ msgstr "Modo %s"
 msgid "1 app"
 msgstr "1 app"
 
-#: extension/gpuapps.js:90 extension/lab.js:200
+#: extension/gpuapps.js:90 extension/lab.js:202
 #, javascript-format
 msgid "%d apps"
 msgstr "%d apps"
@@ -243,7 +243,7 @@ msgstr "não respondeu"
 msgid "closing…"
 msgstr "fechando…"
 
-#: extension/gpuapps.js:143 extension/lab.js:407
+#: extension/gpuapps.js:143 extension/lab.js:409
 msgid "system"
 msgstr "sistema"
 
@@ -251,186 +251,255 @@ msgstr "sistema"
 msgid "Close"
 msgstr "Fechar"
 
-#: extension/gpuapps.js:154 extension/lab.js:407
+#: extension/gpuapps.js:154 extension/lab.js:409
 msgid "Force"
 msgstr "Forçar"
 
-#: extension/lab.js:184 extension/lab.js:385 extension/layout.js:37
+#: extension/lab.js:186 extension/lab.js:387 extension/layout.js:37
 #: extension/modes.js:28 extension/modes.js:34 extension/modes.js:43
 #: extension/prefs.js:174 extension/prefs.js:175 extension/tiles.js:360
 msgid "Modes"
 msgstr "Modos"
 
-#: extension/lab.js:191 extension/lab.js:394 extension/layout.js:39
+#: extension/lab.js:193 extension/lab.js:396 extension/layout.js:39
 #: extension/peripherals.js:306 extension/peripherals.js:312
 #: extension/tiles.js:388
 msgid "Peripherals"
 msgstr "Periféricos"
 
-#: extension/lab.js:214 extension/lab.js:366 extension/layout.js:49
+#: extension/lab.js:216 extension/lab.js:368 extension/layout.js:49
 #: extension/pieces.js:92 extension/prefs.js:104 extension/tiles.js:289
 msgid "Automatic profile"
 msgstr "Perfil automático"
 
-#: extension/lab.js:225 extension/layout.js:51 extension/pieces.js:52
+#: extension/lab.js:227 extension/layout.js:51 extension/pieces.js:52
 #: extension/prefs.js:109
 msgid "60 Hz screen on battery"
 msgstr "Tela a 60 Hz na bateria"
 
-#: extension/lab.js:228 extension/layout.js:53 extension/pieces.js:58
+#: extension/lab.js:230 extension/layout.js:53 extension/pieces.js:58
 msgid "Game mode through GameMode"
 msgstr "Modo de jogo pelo GameMode"
 
-#: extension/lab.js:231 extension/lab.js:363 extension/layout.js:55
+#: extension/lab.js:233 extension/lab.js:365 extension/layout.js:55
 #: extension/pieces.js:55 extension/prefs.js:99 extension/tiles.js:283
 msgid "NitroSense key"
 msgstr "Tecla NitroSense"
 
-#: extension/lab.js:236 extension/lab.js:380 extension/layout.js:45
+#: extension/lab.js:238 extension/lab.js:382 extension/layout.js:45
 #: extension/pieces.js:121 extension/prefs.js:305 extension/prefs.js:306
 #: extension/tiles.js:326
 msgid "Fan curve"
 msgstr "Curva de ventoinha"
 
-#: extension/lab.js:237 extension/pieces.js:122 extension/tiles.js:327
+#: extension/lab.js:239 extension/pieces.js:122 extension/tiles.js:327
 msgid "Edit"
 msgstr "Editar"
 
-#: extension/lab.js:245 extension/peripherals.js:322 extension/pieces.js:78
+#: extension/lab.js:247 extension/peripherals.js:322 extension/pieces.js:78
 #: extension/tiles.js:386 extension/tiles.js:433
 msgid "Test peripherals…"
 msgstr "Testar periféricos…"
 
-#: extension/lab.js:245 extension/pieces.js:78 extension/tiles.js:433
+#: extension/lab.js:247 extension/pieces.js:78 extension/tiles.js:433
 msgid "Preferences…"
 msgstr "Preferências…"
 
-#: extension/lab.js:292 extension/tiles.js:125
+#: extension/lab.js:294 extension/tiles.js:125
 msgid "On"
 msgstr "Ligado"
 
-#: extension/lab.js:292 extension/pieces.js:67 extension/tiles.js:125
+#: extension/lab.js:294 extension/pieces.js:67 extension/tiles.js:125
 msgid "Off"
 msgstr "Desligado"
 
-#: extension/lab.js:316 extension/layout.js:33 extension/tiles.js:223
+#: extension/lab.js:318 extension/layout.js:33 extension/tiles.js:223
 msgid "Battery"
 msgstr "Bateria"
 
-#: extension/lab.js:349 extension/tiles.js:259 extension/tiles.js:267
+#: extension/lab.js:351 extension/tiles.js:259 extension/tiles.js:267
 msgid "Auto (short)"
 msgstr "Auto"
 
-#: extension/lab.js:349 extension/tiles.js:259 extension/tiles.js:267
+#: extension/lab.js:351 extension/tiles.js:259 extension/tiles.js:267
 msgid "Max (short)"
 msgstr "Máx"
 
-#: extension/lab.js:349 extension/tiles.js:259 extension/tiles.js:267
+#: extension/lab.js:351 extension/tiles.js:259 extension/tiles.js:267
 msgid "Curve (short)"
 msgstr "Curva"
 
-#: extension/lab.js:354 extension/tiles.js:271
+#: extension/lab.js:356 extension/tiles.js:271
 msgid "Limit 80%"
 msgstr "Limite 80%"
 
-#: extension/lab.js:357 extension/tiles.js:275
+#: extension/lab.js:359 extension/tiles.js:275
 msgid "60 Hz on battery"
 msgstr "60 Hz na bateria"
 
-#: extension/lab.js:403 extension/layout.js:43 extension/tiles.js:406
+#: extension/lab.js:405 extension/layout.js:43 extension/tiles.js:406
 msgid "Apps using the GPU"
 msgstr "Apps usando a GPU"
 
-#: extension/lab.js:412 extension/tiles.js:420
+#: extension/lab.js:414 extension/tiles.js:420
 msgid "System"
 msgstr "Sistema"
 
-#: extension/lab.js:424 extension/tiles.js:439
+#: extension/lab.js:426 extension/tiles.js:439
 msgid "Test peripherals"
 msgstr "Testar periféricos"
 
-#: extension/lab.js:424 extension/layout.js:59 extension/tiles.js:439
+#: extension/lab.js:426 extension/layout.js:59 extension/tiles.js:439
 msgid "Preferences"
 msgstr "Preferências"
 
-#: extension/lab.js:458
+#: extension/lab.js:474
 msgid "Build your menu on a 4-column grid. Drag items from the drawer to the cell you want; drop on top of another item to swap them or push it down. Click an item to pick its size. Keyboard: arrows move one cell, + and − change the size, Delete takes it out, Enter opens the options. Changes apply right away."
 msgstr "Monte o seu menu numa grade de 4 colunas. Arraste os itens da gaveta para a célula que quiser; solte em cima de outro item para trocar os dois ou empurrá-lo para baixo. Clique num item para escolher o tamanho. Teclado: setas movem uma célula, + e − trocam o tamanho, Delete tira, Enter abre as opções. As mudanças valem na hora."
 
-#: extension/lab.js:469
+#: extension/lab.js:485
 msgid "Ready-made layouts"
 msgstr "Layouts prontos"
 
-#: extension/lab.js:482
+#: extension/lab.js:498 extension/prefs.js:262
+msgid "Custom"
+msgstr "Livre"
+
+#: extension/lab.js:498
+msgid "Your last edit, kept on its own"
+msgstr "Sua última edição, guardada à parte"
+
+#: extension/lab.js:505
+msgid "My layouts"
+msgstr "Meus layouts"
+
+#: extension/lab.js:508
+msgid "Save as…"
+msgstr "Salvar como…"
+
+#: extension/lab.js:509
+msgid "Save the grid as it is now, with a name"
+msgstr "Salvar a grade como está agora, com um nome"
+
+#: extension/lab.js:525
+msgid "Layout name"
+msgstr "Nome do layout"
+
+#: extension/lab.js:552
+msgid "Save the grid as"
+msgstr "Salvar a grade como"
+
+#: extension/lab.js:553
+msgid "Replace"
+msgstr "Substituir"
+
+#: extension/lab.js:553
+msgid "Save"
+msgstr "Salvar"
+
+#: extension/lab.js:560
+msgid "Name already in use"
+msgstr "Nome já usado"
+
+#: extension/lab.js:560
+msgid "Rename"
+msgstr "Renomear"
+
+#: extension/lab.js:567
+msgid "Replace with the current grid"
+msgstr "Substituir pela grade atual"
+
+#: extension/lab.js:573
+msgid "Delete"
+msgstr "Apagar"
+
+#: extension/lab.js:578
+msgid "Click again to delete"
+msgstr "Clique de novo para apagar"
+
+#: extension/lab.js:587
 msgid "Space between items"
 msgstr "Distância entre os itens"
 
-#: extension/lab.js:494
+#: extension/lab.js:599
 msgid "Drawer"
 msgstr "Gaveta"
 
-#: extension/lab.js:495
+#: extension/lab.js:600
 msgid "Drag to the grid, or press Enter to put it in the first free spot. Drop here to take an item out."
 msgstr "Arraste para a grade, ou aperte Enter para pôr no primeiro lugar livre. Solte aqui para tirar um item."
 
-#: extension/lab.js:499
+#: extension/lab.js:604
 msgid "Outside the top bar"
 msgstr "Fora da barra superior"
 
-#: extension/lab.js:507
+#: extension/lab.js:612
 msgid "Menu height"
 msgstr "Altura do menu"
 
-#: extension/lab.js:516
+#: extension/lab.js:621
 msgid "Activities"
 msgstr "Atividades"
 
-#: extension/lab.js:517
+#: extension/lab.js:622
 msgid "Sun 1 Nov 03:20"
 msgstr "dom 1 nov 03:20"
 
-#: extension/lab.js:534
+#: extension/lab.js:639
 msgid "fixed"
 msgstr "fixo"
 
-#: extension/lab.js:593
+#: extension/lab.js:698
 msgid "Full width"
 msgstr "Largura inteira"
 
-#: extension/lab.js:594
+#: extension/lab.js:699
 msgid "Does not fit here: move it first"
 msgstr "Não cabe aqui: mova antes"
 
-#: extension/lab.js:606
+#: extension/lab.js:711
 msgid "Show the title"
 msgstr "Mostrar o título"
 
-#: extension/lab.js:615
+#: extension/lab.js:720
 msgid "Take out of the menu"
 msgstr "Tirar do menu"
 
-#: extension/lab.js:823
+#: extension/lab.js:928
 msgid "drag to move, click for the size"
 msgstr "arraste para mover, clique para o tamanho"
 
-#: extension/lab.js:875
+#: extension/lab.js:976
+#, javascript-format
+msgid "%d items"
+msgstr "%d itens"
+
+#: extension/lab.js:985
+msgid "Rename, replace or delete"
+msgstr "Renomear, substituir ou apagar"
+
+#: extension/lab.js:992
+msgid "Nothing saved yet. Arrange the grid and press Save as…"
+msgstr "Nada salvo ainda. Monte a grade e clique em Salvar como…"
+
+#: extension/lab.js:1010
 msgid "Drag to the grid or press Enter"
 msgstr "Arraste para a grade ou aperte Enter"
 
-#: extension/lab.js:891
+#: extension/lab.js:1026
 msgid "Everything is in the menu"
 msgstr "Tudo está no menu"
 
-#: extension/lab.js:902
+#: extension/lab.js:1037
 msgid "icon"
 msgstr "ícone"
 
-#: extension/lab.js:914
+#: extension/lab.js:1049
 #, javascript-format
 msgid "%d px: fits your smallest screen (%d px) without scrolling"
 msgstr "%d px: cabe na sua menor tela (%d px) sem rolar"
 
-#: extension/lab.js:915
+#: extension/lab.js:1050
 #, javascript-format
 msgid "%d px: %d px more than your smallest screen; the menu will scroll"
 msgstr "%d px: %d px a mais que a sua menor tela; o menu vai rolar"
@@ -979,10 +1048,6 @@ msgstr "Boost (+100/+500)"
 msgid "Maximum (+150/+1000)"
 msgstr "Máximo (+150/+1000)"
 
-#: extension/prefs.js:262
-msgid "Custom"
-msgstr "Livre"
-
 #: extension/prefs.js:272
 msgid "GPU power limit (W)"
 msgstr "Limite de potência da GPU (W)"
@@ -1122,50 +1187,66 @@ msgstr "Itens do menu na grade"
 msgid "Each entry is id:size:row:column (4 columns). Full-width sizes (full, compact, grid, row, normal, short) keep the classic look; the others are tiles (1x1, 2x1, 2x2, 4x2). Items not listed are not shown."
 msgstr "Cada entrada é id:tamanho:linha:coluna (4 colunas). Os tamanhos de largura inteira (full, compact, grid, row, normal, short) mantêm o visual clássico; os outros são ladrilhos (1x1, 2x1, 2x2, 4x2). O que não está na lista não aparece."
 
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:11
+msgid "Custom layout"
+msgstr "Layout personalizado"
+
 #: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:12
+msgid "The layout you edited in the lab (same format as grid-items). Kept apart so picking a ready-made layout does not lose it."
+msgstr "O layout que você editou no laboratório (mesmo formato de grid-items). Fica à parte para um layout pronto não apagá-lo."
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:16
+msgid "Named layouts"
+msgstr "Layouts com nome"
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:17
+msgid "JSON list of {\"name\": text, \"items\": [id:size:row:column, ...]} saved in the lab."
+msgstr "Lista JSON de {\"name\": texto, \"items\": [id:tamanho:linha:coluna, ...]} salva no laboratório."
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:22
 msgid "Space between menu items, in pixels"
 msgstr "Distância entre os itens do menu, em pixels"
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:16
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:26
 msgid "Menu pieces shown without their title"
 msgstr "Peças do menu mostradas sem o título"
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:17
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:27
 msgid "Ids: profile, fans, sensors."
 msgstr "Ids: profile, fans, sensors."
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:21
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:31
 msgid "Top bar items, in order"
 msgstr "Itens da barra superior, em ordem"
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:22
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:32
 msgid "Ids: icon, cpu, gpu, mode, fan, power. The GPU temperature only shows while the GPU is awake; the power draw only on battery."
 msgstr "Ids: icon, cpu, gpu, mode, fan, power. A temperatura da GPU só aparece com a GPU acordada; o consumo, só na bateria."
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:33
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:43
 msgid "Profile applied when the charger is plugged in (empty = keep the current one)"
 msgstr "Perfil aplicado quando o carregador é ligado (vazio = manter o atual)"
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:44
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:54
 msgid "Profile applied when running on battery (empty = keep the current one)"
 msgstr "Perfil aplicado na bateria (vazio = manter o atual)"
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:48
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:58
 msgid "Lower the laptop screen to 60 Hz on battery"
 msgstr "Baixar a tela do notebook para 60 Hz na bateria"
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:49
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:59
 msgid "Only the built-in screen; the previous refresh rate comes back when plugged in."
 msgstr "Só a tela interna; a taxa de antes volta na tomada."
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:53
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:63
 msgid "Modes section expanded in the menu"
 msgstr "Seção de modos aberta no menu"
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:57
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:67
 msgid "Peripherals section expanded in the menu"
 msgstr "Seção de periféricos aberta no menu"
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:61
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:71
 msgid "Use the NitroSense key to toggle the Performance profile"
 msgstr "Usar a tecla NitroSense para alternar o perfil Performance"

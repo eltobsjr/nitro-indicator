@@ -280,3 +280,47 @@ export function cleanPanel(list) {
     const seen = new Set();
     return list.filter(id => ALL_PANEL.includes(id) && !seen.has(id) && seen.add(id));
 }
+
+// ---- layouts que você salva com nome (GSettings saved-layouts, JSON) ----
+const sortKey = list => serialize([...list].sort((a, b) => a.r - b.r || a.c - b.c || (a.id < b.id ? -1 : 1))).join('|');
+export const sameItems = (a, b) => sortKey(a) === sortKey(b);
+
+// [{name, items}] válidos, sem nome vazio ou repetido (ignora maiúsculas) e sem lista vazia
+export function parseSaved(json) {
+    let raw;
+    try {
+        raw = JSON.parse(json);
+    } catch {
+        return [];
+    }
+    if (!Array.isArray(raw))
+        return [];
+    const out = [];
+    for (const l of raw) {
+        const name = typeof l?.name === 'string' ? l.name.trim().slice(0, 40) : '';
+        const items = Array.isArray(l?.items) ? parseItems(l.items.filter(x => typeof x === 'string')) : [];
+        if (name && items.length && !out.some(o => o.name.toLowerCase() === name.toLowerCase()))
+            out.push({name, items});
+    }
+    return out;
+}
+export const serializeSaved = list => JSON.stringify(list.map(l => ({name: l.name, items: serialize(l.items)})));
+
+// Salva (ou substitui, se o nome já existe) mantendo a posição na lista
+export function saveNamed(list, name, items) {
+    name = name.trim().slice(0, 40);
+    if (!name || !items.length)
+        return list;
+    const i = list.findIndex(l => l.name.toLowerCase() === name.toLowerCase());
+    if (i < 0)
+        return [...list, {name, items}];
+    return list.map((l, j) => (j === i ? {name, items} : l));
+}
+
+// Troca o nome; a lista igual se o nome novo é vazio ou já é de outro layout
+export function renameNamed(list, from, to) {
+    to = to.trim().slice(0, 40);
+    if (!to || list.some(l => l.name !== from && l.name.toLowerCase() === to.toLowerCase()))
+        return list;
+    return list.map(l => (l.name === from ? {...l, name: to} : l));
+}
