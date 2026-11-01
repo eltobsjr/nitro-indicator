@@ -20,6 +20,7 @@
 #include <linux/dmi.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
+#include <linux/unaligned.h>
 
 #define GAMING_GUID	"7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56"
 #define METHOD_FAN	0x0E
@@ -59,15 +60,29 @@ static int nf_call(u32 method, u64 in, size_t in_size, u64 *out)
 	struct acpi_buffer outbuf = { ACPI_ALLOCATE_BUFFER, NULL };
 	union acpi_object *obj;
 	acpi_status st;
-	int ret = -EIO;
+	int ret;
 
 	st = wmi_evaluate_method(GAMING_GUID, 0, method, &inbuf, &outbuf);
 	if (ACPI_FAILURE(st))
 		return -EIO;
+	/*
+	 * O ANV15-51 responde com um buffer de 4 ou 8 bytes, outros modelos com um inteiro; sem resposta
+	 * vale 0 (sucesso). É o mesmo tratamento do WMI_gaming_execute_u64() do acer-wmi.
+	 */
 	obj = outbuf.pointer;
+	*out = 0;
+	ret = 0;
 	if (obj && obj->type == ACPI_TYPE_INTEGER) {
 		*out = obj->integer.value;
-		ret = 0;
+	} else if (obj && obj->type == ACPI_TYPE_BUFFER) {
+		if (obj->buffer.length >= sizeof(u64))
+			*out = get_unaligned_le64(obj->buffer.pointer);
+		else if (obj->buffer.length >= sizeof(u32))
+			*out = get_unaligned_le32(obj->buffer.pointer);
+		else
+			ret = -EIO;
+	} else if (obj) {
+		ret = -EIO;
 	}
 	kfree(outbuf.pointer);
 	return ret;
