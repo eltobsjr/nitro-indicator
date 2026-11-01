@@ -41,7 +41,12 @@ a expõe (`pwm`) no ANV15-51. O módulo `system/kmod/nitro_fan.c` repete a mesma
 - Velocidade (modo `3`): método `0x10`, entrada `id_ventoinha | (porcentagem << 8)` com id `1` = CPU e
   `4` = GPU; leitura pelo `0x11`. Os mesmos métodos que o acer-wmi oficial usa no `pwm` do hwmon
   (fan control, kernel 6.19+; o quirk do ANV15-51 entrou em out/2026). Status `0` = ok, `1` = sem
-  ventoinha, `2` = valor inválido. **Ainda não medido nesta máquina**: rode `sudo system/kmod/teste.sh`.
+  ventoinha, `2` = valor inválido.
+- A resposta do firmware do ANV15-51 vem num **buffer** de 4/8 bytes, não num inteiro; o módulo aceita
+  os dois (como o `WMI_gaming_execute_u64()` do acer-wmi). Tratar só inteiro dava EIO com o comando executado.
+- Medido com `sudo system/kmod/teste.sh` (01/11/2026, máquina ociosa): máximo 3660/3327 → 7673/7260 RPM;
+  `custom` 40% lido de volta como 40 (≈ 3500 RPM, perto do automático em repouso); 101% recusado;
+  `auto` devolve à BIOS.
 - Interface: `/sys/kernel/nitro_fan/mode` (`auto`, `max`, `custom`) e `cpu_speed`/`gpu_speed` (0–100),
   só root. Ao descarregar o módulo, devolve o controle à BIOS (`auto`).
 - Segurança: só carrega nos modelos da tabela DMI (hoje, o ANV15-51); `force=1` pula a checagem.
@@ -121,8 +126,11 @@ ativa pela regra do polkit.
 | Interface de edição dos modos (agora nas preferências) | Renderizada e navegada num GNOME Shell headless; edição real não testada |
 | Testes automáticos (`make test`) | `nitro-mode` (liga/desliga/restaura, curva, bateria), curva, `nitro-input`, `store.js`/`utils.js`/`devices.js` no gjs |
 | Estabilidade de +100/+500 MHz em jogo longo | Não testada |
-| Ventoinha em porcentagem e curva | Implementado (`nitro_fan` + `nitro-fancurve`); compila; **falta medir no hardware** (`teste.sh`) |
-| Limite de carga da bateria | Implementado (`nitro_battery`, protocolo do acer-wmi-battery, GUID presente nesta máquina); compila; **falta medir no hardware** |
+| Ventoinha em porcentagem | Testado no hardware (`teste.sh`): máximo, 40% e automático; 101% recusado |
+| Curva de ventoinha (`nitro-fancurve`) | Matemática testada (`make test`); o serviço em uso real ainda não foi observado |
+| Limite de carga da bateria | Testado no hardware: liga (80), desliga (100), 90 vira 80; o UPower reconhece (`ChargeThresholdSupported`) |
+| DKMS | Instalado e recompilando (`dkms status nitro-kmod`) |
+| tuned-ppd | Em sintonia: "Desempenho" = `nitro-performance` = `balanced-performance` |
 | Modo da GPU (MUX), RGB do teclado | Não verificado |
 
 ## Fora de escopo
