@@ -16,6 +16,7 @@ MODLOAD="/etc/modules-load.d/nitro_fan.conf"
 POLICY="/usr/share/polkit-1/actions/com.eltobsjr.nitro.policy"
 MODPROBE="/etc/modprobe.d/acer-nitro.conf"
 UNIT="/etc/systemd/system/nitro-fancurve.service"
+HWDB="/etc/udev/hwdb.d/61-nitro-battery.hwdb"
 TUNED_PROFILE="/etc/tuned/profiles/nitro-performance"
 PPD_CONF="/etc/tuned/ppd.conf"
 VERSION="$(python3 -c "import json;print(json.load(open('$ROOT/extension/metadata.json'))['version-name'])")"
@@ -50,7 +51,8 @@ system_current() {
     same "$ROOT/system/acer-nitro-fan.conf" "$MODLOAD" &&
     same "$ROOT/system/com.eltobsjr.nitro.policy" "$POLICY" &&
     same "$ROOT/system/acer-nitro.conf" "$MODPROBE" &&
-    same "$ROOT/system/nitro-fancurve.service" "$UNIT"
+    same "$ROOT/system/nitro-fancurve.service" "$UNIT" &&
+    same "$ROOT/system/61-nitro-battery.hwdb" "$HWDB"
 }
 if [ "$WANT_SYSTEM" != "true" ]; then
     echo "==> Parte do sistema ignorada (instale depois com ./install.sh)"
@@ -64,6 +66,10 @@ else
     sudo install -m 644 "$ROOT/system/acer-nitro.conf" "$MODPROBE"
     sudo install -m 644 "$ROOT/system/nitro-fancurve.service" "$UNIT"
     sudo systemctl daemon-reload
+    # UPower lê o limite de carga do hwdb: com isso o GNOME enxerga o limite do nitro_battery
+    sudo install -D -m 644 "$ROOT/system/61-nitro-battery.hwdb" "$HWDB"
+    sudo systemd-hwdb update && sudo udevadm trigger -s power_supply || true
+    sudo systemctl try-restart upower.service || true
     command -v restorecon >/dev/null 2>&1 &&
         sudo restorecon $(for h in $HELPERS; do echo "$BIN/$h"; done) "$POLICY" "$MODPROBE" "$MODLOAD" "$UNIT" || true
 fi
@@ -151,6 +157,16 @@ fi
 mkdir -p "$(dirname "$MODE_BIN")"
 install -m 755 "$ROOT/system/nitro-mode" "$MODE_BIN"
 install -m 755 "$ROOT/system/nitro-input" "$(dirname "$MODE_BIN")/nitro-input"  # leitor de controles (sem root)
+install -m 755 "$ROOT/system/nitro-gpuapps" "$(dirname "$MODE_BIN")/nitro-gpuapps"  # apps usando a GPU (sem root)
+
+# GameMode: ao abrir um jogo, liga o modo marcado como "ligar ao abrir um jogo" (mesmo com a extensão desligada).
+# Só cria o arquivo se você não tiver um; dá para desligar nas preferências.
+GAMEMODE_INI="${XDG_CONFIG_HOME:-$HOME/.config}/gamemode.ini"
+if command -v gamemoded >/dev/null 2>&1 && [ ! -e "$GAMEMODE_INI" ]; then
+    printf '# Nitro Indicator: liga o modo marcado como "ligar ao abrir um jogo".\n[custom]\nstart=%s auto-start\nend=%s auto-stop\n' \
+        "$MODE_BIN" "$MODE_BIN" > "$GAMEMODE_INI"
+    echo "==> GameMode: $GAMEMODE_INI criado (desligue nas preferências se não quiser)"
+fi
 install -D -m 644 "$ROOT/extension/defaults.json" "$DEFAULTS"
 
 # 3) recarrega o acer_wmi com predator_v4=1 se ainda não estiver ativo

@@ -6,12 +6,41 @@ import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+import {buildLab} from './lab.js';
 import {initStore, loadModes, saveModes, modeFields, newModeId, summary, POWER, GPC, MEM} from './store.js';
 import {
-    readText, execAsync, findHwmon, fanBackend, batteryLimitFile, ppdIntegrated, loadCurve, DEFAULT_CURVE,
+    readText, execAsync, findHwmon, fanBackend, gamemodeState, setGamemode, batteryLimitFile, ppdIntegrated, loadCurve, DEFAULT_CURVE,
 } from './utils.js';
 
 const FAN_HELPER = '/usr/local/bin/nitro-fan';
+
+// Nome no barramento do sistema com dono (ou que o D-Bus sabe ativar, com activatable)
+function busHasOwner(name, activatable = false) {
+    try {
+        const call = (method, args, type) => Gio.DBus.system.call_sync('org.freedesktop.DBus', '/org/freedesktop/DBus',
+            'org.freedesktop.DBus', method, args, new GLib.VariantType(type), Gio.DBusCallFlags.NONE, 1000, null).deepUnpack()[0];
+        return call('NameHasOwner', new GLib.Variant('(s)', [name]), '(b)') ||
+            (activatable && call('ListActivatableNames', null, '(as)').includes(name));
+    } catch {
+        return false;
+    }
+}
+
+// O UPower reconhece o limite de carga desta bateria (então o GNOME também)
+function upowerChargeLimit() {
+    try {
+        const paths = Gio.DBus.system.call_sync('org.freedesktop.UPower', '/org/freedesktop/UPower', 'org.freedesktop.UPower',
+            'EnumerateDevices', null, new GLib.VariantType('(ao)'), Gio.DBusCallFlags.NONE, 1000, null).deepUnpack()[0];
+        return paths.some(path => {
+            const v = Gio.DBus.system.call_sync('org.freedesktop.UPower', path, 'org.freedesktop.DBus.Properties', 'Get',
+                new GLib.Variant('(ss)', ['org.freedesktop.UPower.Device', 'ChargeThresholdSupported']),
+                new GLib.VariantType('(v)'), Gio.DBusCallFlags.NONE, 1000, null).deepUnpack()[0];
+            return v.unpack() === true;
+        });
+    } catch {
+        return false;
+    }
+}
 
 const profiles = () => [
     {id: 'low-power', label: _('Eco')},
@@ -53,9 +82,10 @@ export default class NitroPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         initStore(this.path);
         this._settings = this.getSettings();
-        window.set_default_size(640, 760);
+        window.set_default_size(1000, 860);
         window.search_enabled = true;
         window.add(this._generalPage());
+        window.add(this._labPage());
         window.add(this._modesPage(window));
         window.add(this._fanPage(window));
     }
@@ -65,18 +95,7 @@ export default class NitroPreferences extends ExtensionPreferences {
     _generalPage() {
         const page = new Adw.PreferencesPage({title: _('General'), icon_name: 'preferences-system-symbolic'});
 
-        const panel = new Adw.PreferencesGroup({title: _('Top bar and menu')});
-        const gpu = new Adw.SwitchRow({title: _('GPU temperature in the top bar'),
-            subtitle: _('Only while the NVIDIA GPU is awake; it is never woken up just to read it')});
-        this._settings.bind('panel-gpu-temp', gpu, 'active', Gio.SettingsBindFlags.DEFAULT);
-        panel.add(gpu);
-        const hist = new Adw.SwitchRow({title: _('Temperature history'), subtitle: _('CPU and GPU chart for the last 3 minutes')});
-        this._settings.bind('show-history', hist, 'active', Gio.SettingsBindFlags.DEFAULT);
-        panel.add(hist);
-        const periph = new Adw.SwitchRow({title: _('Peripherals in the menu'),
-            subtitle: _('Controllers, mice, keyboards and wireless battery; input is only read while the menu is open')});
-        this._settings.bind('show-peripherals', periph, 'active', Gio.SettingsBindFlags.DEFAULT);
-        panel.add(periph);
+        const panel = new Adw.PreferencesGroup({title: _('Keyboard')});
         const key = new Adw.SwitchRow({title: _('NitroSense key'), subtitle: _('Toggles between Performance and the previous profile')});
         this._settings.bind('turbo-key', key, 'active', Gio.SettingsBindFlags.DEFAULT);
         panel.add(key);
@@ -87,10 +106,27 @@ export default class NitroPreferences extends ExtensionPreferences {
         const opts = [['', _('Keep the current one')], ...profiles().map(p => [p.id, p.label])];
         for (const [k, title] of [['ac-profile', _('Plugged in')], ['battery-profile', _('On battery')]])
             power.add(comboRow(title, null, opts, this._settings.get_string(k), v => this._settings.set_string(k, v)));
+        const hz = new Adw.SwitchRow({title: _('60 Hz screen on battery'),
+            subtitle: _('Only the laptop screen; the previous rate comes back when plugged in')});
+        this._settings.bind('battery-60hz', hz, 'active', Gio.SettingsBindFlags.DEFAULT);
+        power.add(hz);
+        power.add(this._gamemodeRow());
         page.add(power);
 
         page.add(this._statusGroup());
         return page;
+    }
+
+    // ~/.config/gamemode.ini: o GameMode chama o nitro-mode ao abrir e fechar um jogo (funciona com a extensão
+    // desligada). Um gamemode.ini seu nunca é mexido (utils.js).
+    _gamemodeRow() {
+        const state = gamemodeState();
+        const row = new Adw.SwitchRow({title: _('Turn on the game mode through GameMode'),
+            subtitle: state === 'other' ? _('You already have a gamemode.ini; add start/end with nitro-mode auto-start/auto-stop to it')
+                : _('Works even with the extension off or the screen locked'),
+            active: state === 'ours', sensitive: state !== 'other'});
+        row.connect('notify::active', () => setGamemode(row.active));
+        return row;
     }
 
     // O que está instalado e funcionando: ajuda a entender um botão acinzentado no menu
@@ -111,9 +147,25 @@ export default class NitroPreferences extends ExtensionPreferences {
         group.add(row(_('Power profiles daemon'), ppdIntegrated(),
             _('Integrated: Quick Settings and this menu stay in sync'),
             _('Not integrated: profiles are written directly (run ./install.sh to integrate tuned-ppd)')));
+        group.add(row(_('Charge limit in GNOME Settings'), upowerChargeLimit(),
+            _('“Preserve battery health” controls the same limit'),
+            _('UPower does not see the limit yet (run ./install.sh and load nitro_battery)')));
+        group.add(row(_('thermald'), busHasOwner('org.freedesktop.thermald'),
+            _('Running; it does not touch the Acer profile'), _('Not running (optional)')));
+        group.add(row(_('Mouse DPI (ratbagd)'), busHasOwner('org.freedesktop.ratbag1', true),
+            _('Available in the peripheral tester for supported mice'),
+            _('ratbagd not installed (sudo dnf install libratbag-ratbagd)')));
         group.add(row(_('Platform profile'), readText('/sys/firmware/acpi/platform_profile') !== null,
             readText('/sys/firmware/acpi/platform_profile') ?? '', _('acer_wmi without predator_v4: run ./install.sh')));
         return group;
+    }
+
+    // ---- Laboratório: monte o menu e a barra arrastando as peças (lab.js) ----
+
+    _labPage() {
+        const page = new Adw.PreferencesPage({title: _('Lab'), icon_name: 'view-grid-symbolic'});
+        buildLab(page, this._settings, _, Adw);
+        return page;
     }
 
     // ---- Modos ----

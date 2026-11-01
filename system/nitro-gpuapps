@@ -1,0 +1,122 @@
+#!/usr/bin/python3
+"""Apps usando a GPU NVIDIA: lista e encerra. Sem root (só enxerga e encerra processos do próprio usuário).
+
+Uso: nitro-gpuapps list                 JSON com os processos que têm /dev/nvidiaN aberto
+     nitro-gpuapps kill PID NOME term|kill
+A lista vem de /proc/*/fd (não acorda a placa). Com a placa já ativa, o nvidia-smi completa a VRAM de cada um.
+Processos da sessão (gnome-shell, Xwayland…) e de outros usuários saem marcados como "system" e não são encerrados.
+O kill confere o nome de novo antes de mandar o sinal, para não acertar outro processo que herdou o PID.
+"""
+import json
+import os
+import re
+import signal
+import subprocess
+import sys
+
+DEV = re.compile(r'^/dev/nvidia\d+$')
+# encerrar algum destes derruba a sessão ou o driver
+SYSTEM = {'gnome-shell', 'Xwayland', 'Xorg', 'gnome-session-b', 'gnome-session-binary', 'mutter-x11-fram',
+          'gdm-wayland-ses', 'gdm-x-session', 'systemd', 'nvidia-powerd', 'nvidia-persistenced', 'gsd-xsettings'}
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return None
+
+
+def ppid(pid):
+    stat = read(f'/proc/{pid}/stat') or ''
+    # o nome vai entre parênteses e pode ter espaços: o ppid é o 2º campo depois do ')'
+    try:
+        return int(stat.rsplit(')', 1)[1].split()[1])
+    except (IndexError, ValueError):
+        return None
+
+
+def gpu_active():
+    for dev in os.listdir('/sys/bus/pci/devices'):
+        base = f'/sys/bus/pci/devices/{dev}'
+        if read(f'{base}/vendor') == '0x10de' and (read(f'{base}/class') or '').startswith('0x03'):
+            return read(f'{base}/power/runtime_status') == 'active'
+    return False
+
+
+def holders():
+    me = os.getuid()
+    out = []
+    for pid in filter(str.isdigit, os.listdir('/proc')):
+        try:
+            uid = os.stat(f'/proc/{pid}').st_uid
+            fds = os.listdir(f'/proc/{pid}/fd')
+        except OSError:
+            continue  # sumiu ou é de outro usuário
+        for fd in fds:
+            try:
+                if DEV.match(os.readlink(f'/proc/{pid}/fd/{fd}')):
+                    break
+            except OSError:
+                continue
+        else:
+            continue
+        comm = read(f'/proc/{pid}/comm') or '?'
+        # o nvidia-smi que a própria extensão roda para ler a GPU (filho do mesmo gnome-shell que nos chamou)
+        if comm == 'nvidia-smi' and ppid(pid) == os.getppid():
+            continue
+        out.append({'pid': int(pid), 'comm': comm, 'mine': uid == me,
+                    'system': uid != me or comm in SYSTEM or int(pid) == os.getppid()})
+    return out
+
+
+def vram():
+    """{pid: MiB} pela tabela de processos do nvidia-smi (gráficos e computação)."""
+    try:
+        out = subprocess.run(['nvidia-smi'], capture_output=True, text=True, timeout=4).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
+    mem = {}
+    for line in out.splitlines():
+        m = re.match(r'^\|\s+\d+\s+\S+\s+\S+\s+(\d+)\s+\S+\s+.*?(\d+)MiB\s*\|$', line)
+        if m:
+            mem[int(m.group(1))] = int(m.group(2))
+    return mem
+
+
+def main():
+    args = sys.argv[1:]
+    if args == ['list']:
+        active = gpu_active()
+        procs = holders()
+        mem = vram() if active and procs else {}
+        for p in procs:
+            p['vram'] = mem.get(p['pid'])
+        print(json.dumps({'active': active, 'procs': procs}))
+        return 0
+    if len(args) == 4 and args[0] == 'kill' and args[1].isdigit() and args[3] in ('term', 'kill'):
+        pid, name = int(args[1]), args[2]
+        if read(f'/proc/{pid}/comm') != name:
+            print('o processo já terminou', file=sys.stderr)
+            return 3
+        try:
+            owner = os.stat(f'/proc/{pid}').st_uid
+        except FileNotFoundError:  # terminou entre a leitura do nome e agora
+            print('o processo já terminou', file=sys.stderr)
+            return 3
+        if owner != os.getuid() or name in SYSTEM:
+            print(f'{name} é do sistema e não pode ser encerrado daqui', file=sys.stderr)
+            return 4
+        try:
+            os.kill(pid, signal.SIGTERM if args[3] == 'term' else signal.SIGKILL)
+        except ProcessLookupError:
+            print('o processo já terminou', file=sys.stderr)
+            return 3
+        return 0
+    print(__doc__, file=sys.stderr)
+    return 2
+
+
+if __name__ == '__main__':
+    sys.exit(main())

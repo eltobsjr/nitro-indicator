@@ -133,3 +133,31 @@ export function ppdIntegrated() {
     const conf = readText('/etc/tuned/ppd.conf') ?? '';
     return /^\s*performance\s*=\s*nitro-performance\s*$/m.test(conf);
 }
+
+// ---- GameMode: ~/.config/gamemode.ini que chama o nitro-mode ao abrir e fechar um jogo ----
+// Só criamos ou apagamos o arquivo quando ele é nosso (tem a marca); um gamemode.ini seu nunca é mexido.
+
+const GAMEMODE_MARK = '# Nitro Indicator';
+export const gamemodeIni = () => GLib.build_filenamev([GLib.get_user_config_dir(), 'gamemode.ini']);
+
+// 'ours' (ligado por nós) | 'none' (sem arquivo) | 'other' (arquivo seu: não mexemos)
+export function gamemodeState() {
+    const text = readText(gamemodeIni());
+    if (text === null)
+        return 'none';
+    return text.includes(GAMEMODE_MARK) ? 'ours' : 'other';
+}
+
+export function setGamemode(on) {
+    const state = gamemodeState();
+    if (state === 'other')
+        return false;
+    if (on) {
+        const bin = GLib.build_filenamev([GLib.get_home_dir(), '.local', 'bin', 'nitro-mode']);
+        return writeText(gamemodeIni(), `${GAMEMODE_MARK}: liga o modo marcado como "ligar ao abrir um jogo".\n` +
+            `[custom]\nstart=${bin} auto-start\nend=${bin} auto-stop\n`);
+    }
+    if (state === 'ours')
+        GLib.unlink(gamemodeIni());
+    return true;
+}

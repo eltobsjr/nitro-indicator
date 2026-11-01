@@ -7,7 +7,7 @@ Sem root: o systemd (uaccess) já dá ao usuário logado acesso aos nós de joys
 (esses o GNOME Shell entrega à extensão direto, e só enquanto o menu ou o testador estão abertos).
 
 Saída:
-  {"t": "add", "dev": "event23", "name": "...", "bus": "usb", "axes": {"0": [min, max], ...},
+  {"t": "add", "dev": "event23", "name": "...", "bus": "usb", "ids": [bus, vendor, product, version], "axes": {"0": [min, max], ...},
    "buttons": [304, ...], "pressed": [304], "abs": {"0": valor}}
   {"t": "key", "dev": "event23", "code": 304, "value": 1}
   {"t": "abs", "dev": "event23", "code": 0, "value": -1200}
@@ -40,7 +40,7 @@ def bits(fd, nr, maxbit):
 
 
 def gamepads(text=None):
-    """{eventN: (nome, barramento)} dos dispositivos com nó de joystick (jsN)."""
+    """{eventN: (nome, barramento, ids)} dos dispositivos com nó de joystick (jsN); ids = [bus, vendor, product, version]."""
     out = {}
     if text is None:
         try:
@@ -53,15 +53,16 @@ def gamepads(text=None):
             continue
         ev = re.search(r'\b(event\d+)\b', handlers.group(1))
         name = re.search(r'^N: Name="(.*)"$', block, re.M)
-        bus = re.search(r'^I: Bus=([0-9a-f]+)', block, re.M)
+        ids = re.search(r'^I: Bus=([0-9a-f]+) Vendor=([0-9a-f]+) Product=([0-9a-f]+) Version=([0-9a-f]+)', block, re.M)
         if ev:
-            out[ev.group(1)] = (name.group(1) if name else ev.group(1), BUS.get(int(bus.group(1), 16), 'other') if bus else 'other')
+            nums = [int(x, 16) for x in ids.groups()] if ids else [0, 0, 0, 0]
+            out[ev.group(1)] = (name.group(1) if name else ev.group(1), BUS.get(nums[0], 'other'), nums)
     return out
 
 
 class Pad:
-    def __init__(self, dev, name, bus):
-        self.dev, self.name, self.bus = dev, name, bus
+    def __init__(self, dev, name, bus, ids=(0, 0, 0, 0)):
+        self.dev, self.name, self.bus, self.ids = dev, name, bus, list(ids)
         self.fd = os.open(f'/dev/input/{dev}', os.O_RDONLY | os.O_NONBLOCK)
         try:
             self.buttons = bits(self.fd, 0x20 + EV_KEY, KEY_MAX)
@@ -78,7 +79,7 @@ class Pad:
             raise
 
     def hello(self):
-        return {'t': 'add', 'dev': self.dev, 'name': self.name, 'bus': self.bus, 'axes': self.axes,
+        return {'t': 'add', 'dev': self.dev, 'name': self.name, 'bus': self.bus, 'ids': self.ids, 'axes': self.axes,
                 'buttons': self.buttons, 'pressed': [b for b in self.pressed if b in self.buttons], 'abs': self.abs}
 
     def read(self):
@@ -102,9 +103,9 @@ def emit(obj):
 
 def main():
     if sys.argv[1:] == ['--list']:
-        for dev, (name, bus) in gamepads().items():
+        for dev, (name, bus, ids) in gamepads().items():
             try:
-                p = Pad(dev, name, bus)
+                p = Pad(dev, name, bus, ids)
                 print(json.dumps(p.hello(), ensure_ascii=False))
                 os.close(p.fd)
             except OSError as e:
@@ -123,11 +124,11 @@ def main():
             if dev not in found:
                 os.close(pads.pop(dev).fd)
                 emit({'t': 'remove', 'dev': dev})
-        for dev, (name, bus) in found.items():
+        for dev, (name, bus, ids) in found.items():
             if dev in pads or dev in unreadable:
                 continue
             try:
-                pads[dev] = Pad(dev, name, bus)
+                pads[dev] = Pad(dev, name, bus, ids)
                 emit(pads[dev].hello())
             except OSError:
                 unreadable.add(dev)  # sem permissão (sem uaccess): não fica tentando

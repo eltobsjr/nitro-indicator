@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="nitro@eltobsjr.gmail.com">
   <schema id="org.gnome.shell.extensions.nitro" path="/org/gnome/shell/extensions/nitro/">
-    <key name="panel-gpu-temp" type="b">
-      <default>false</default>
-      <summary>Show the GPU temperature in the top bar</summary>
-      <description>Only while the NVIDIA GPU is awake; it is never woken up just to read it.</description>
+    <key name="grid-items" type="as">
+      <default>['profile:full:0:0', 'fans:full:1:0', 'battery:full:2:0', 'sensors:grid:3:0', 'history:normal:4:0', 'modes:full:5:0', 'peripherals:full:6:0', 'gpu:full:7:0']</default>
+      <summary>Menu items in the grid</summary>
+      <description>Each entry is id:size:row:column (4 columns). Full-width sizes (full, compact, grid, row, normal, short) keep the classic look; the others are tiles (1x1, 2x1, 2x2, 4x2). Items not listed are not shown.</description>
     </key>
-    <key name="show-history" type="b">
-      <default>true</default>
-      <summary>Show the temperature history in the menu</summary>
+    <key name="grid-gap" type="i">
+      <range min="0" max="24"/>
+      <default>12</default>
+      <summary>Space between menu items, in pixels</summary>
+    </key>
+    <key name="hidden-titles" type="as">
+      <default>[]</default>
+      <summary>Menu pieces shown without their title</summary>
+      <description>Ids: profile, fans, sensors.</description>
+    </key>
+    <key name="panel-items" type="as">
+      <default>['icon', 'cpu']</default>
+      <summary>Top bar items, in order</summary>
+      <description>Ids: icon, cpu, gpu, mode, fan, power. The GPU temperature only shows while the GPU is awake; the power draw only on battery.</description>
     </key>
     <key name="ac-profile" type="s">
       <choices>
@@ -32,10 +43,10 @@
       <default>''</default>
       <summary>Profile applied when running on battery (empty = keep the current one)</summary>
     </key>
-    <key name="show-peripherals" type="b">
-      <default>true</default>
-      <summary>Show peripherals in the menu</summary>
-      <description>Controllers, mice and keyboards, wireless battery and the last input; input is only read while the menu is open.</description>
+    <key name="battery-60hz" type="b">
+      <default>false</default>
+      <summary>Lower the laptop screen to 60 Hz on battery</summary>
+      <description>Only the built-in screen; the previous refresh rate comes back when plugged in.</description>
     </key>
     <key name="modes-expanded" type="b">
       <default>false</default>

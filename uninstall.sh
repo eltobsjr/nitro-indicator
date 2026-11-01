@@ -7,7 +7,9 @@ DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATE="${XDG_STATE_HOME:-$HOME/.local/state}/nitro"
 
 gnome-extensions disable "$UUID" 2>/dev/null || true
-rm -rf "$DATA/gnome-shell/extensions/$UUID" "$STATE" "$DATA/nitro" "$HOME/.local/bin/nitro-mode" "$HOME/.local/bin/nitro-input"
+rm -rf "$DATA/gnome-shell/extensions/$UUID" "$STATE" "$DATA/nitro" "$HOME/.local/bin/nitro-mode" "$HOME/.local/bin/nitro-input" "$HOME/.local/bin/nitro-gpuapps"
+GM="${XDG_CONFIG_HOME:-$HOME/.config}/gamemode.ini"
+grep -q "Nitro Indicator" "$GM" 2>/dev/null && rm -f "$GM"
 
 sudo systemctl disable --now nitro-fancurve.service 2>/dev/null || true
 sudo rm -f /etc/systemd/system/nitro-fancurve.service && sudo systemctl daemon-reload
@@ -24,6 +26,9 @@ sudo rm -f /usr/local/bin/nitro-profile /usr/local/bin/nitro-boost /usr/local/bi
     /usr/share/polkit-1/actions/com.eltobsjr.nitro.policy /etc/modprobe.d/acer-nitro.conf \
     /etc/modules-load.d/nitro_fan.conf /etc/modprobe.d/nitro-battery-blacklist.conf
 sudo rm -rf /etc/nitro /etc/tuned/profiles/nitro-performance
+if [ -f /etc/udev/hwdb.d/61-nitro-battery.hwdb ]; then
+    sudo rm -f /etc/udev/hwdb.d/61-nitro-battery.hwdb && sudo systemd-hwdb update && sudo systemctl try-restart upower.service
+fi
 if [ -f /etc/tuned/ppd.conf.nitro-orig ]; then
     sudo mv /etc/tuned/ppd.conf.nitro-orig /etc/tuned/ppd.conf
     sudo systemctl try-restart tuned-ppd.service

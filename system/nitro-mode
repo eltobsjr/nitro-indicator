@@ -2,6 +2,7 @@
 """Modos do Nitro: conjuntos nomeados de ajustes (perfil, ventoinhas, GPU, CPU) que se ligam e desligam de uma vez.
 
 Uso: nitro-mode on NOME | off | toggle NOME | active | list | show NOME | status | defaults
+     nitro-mode auto-start | auto-stop   (GameMode: liga/desliga o modo marcado como "ligar ao abrir jogo")
 Os modos ficam em ~/.config/nitro/modes.json (a extensão Nitro edita; pode editar à mão).
 Enquanto um modo está ligado, o estado anterior fica em ~/.local/state/nitro/mode-active.json e o "off" restaura.
 Chama os helpers de root via pkexec (o polkit libera na sessão ativa, sem senha).
@@ -183,7 +184,7 @@ def turn_off():
     return s.finish()
 
 
-def turn_on(name):
+def turn_on(name, auto=False):
     m = find_mode(name)
     if not m:
         print(f'modo desconhecido: {name}', file=sys.stderr)
@@ -200,7 +201,7 @@ def turn_on(name):
         return 0
     prev = {'profile': read(PROFILE_FILE), 'tuned': tuned_active(), 'fan': fan_mode()}
     with open(ACTIVE, 'w') as f:
-        json.dump({'mode': name, 'boot': boot_id(), 'prev': prev, 'power_limit_set': bool(m['power_limit'])}, f)
+        json.dump({'mode': name, 'boot': boot_id(), 'prev': prev, 'power_limit_set': bool(m['power_limit']), 'auto': auto}, f)
 
     s = Steps()
     if m['cpu_performance']:
@@ -218,6 +219,20 @@ def turn_on(name):
     if m['power_limit']:
         s.do('limite de potência', 'pkexec', f'{BIN}/nitro-boost', 'power', str(m['power_limit']))
     return s.finish()
+
+
+def auto_start():
+    """Jogo abriu (GameMode): liga o modo marcado, a menos que você já tenha ligado algum."""
+    m = next((m for m in load_modes() if m.get('auto_gamemode')), None)
+    if not m or active_state():
+        return 0
+    return turn_on(m['id'], auto=True)
+
+
+def auto_stop():
+    """Jogo fechou: desliga só o que o auto-start ligou."""
+    st = active_state()
+    return turn_off() if st and st.get('auto') else 0
 
 
 def main():
@@ -242,7 +257,7 @@ def main():
         st = active_state()
         print(json.dumps({'mode': st['mode'] if st else None, 'profile': read(PROFILE_FILE)}))
         return 0
-    if not ((cmd in ('on', 'toggle') and len(args) == 2) or (cmd == 'off' and len(args) == 1)):
+    if not ((cmd in ('on', 'toggle') and len(args) == 2) or (cmd in ('off', 'auto-start', 'auto-stop') and len(args) == 1)):
         print(__doc__, file=sys.stderr)
         return 2
     os.makedirs(STATE_DIR, exist_ok=True)
@@ -250,6 +265,10 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX)
         if cmd == 'off':
             return turn_off()
+        if cmd == 'auto-start':
+            return auto_start()
+        if cmd == 'auto-stop':
+            return auto_stop()
         if cmd == 'toggle':
             st = active_state()
             return turn_off() if st and st['mode'] == args[1] else turn_on(args[1])

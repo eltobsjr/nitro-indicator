@@ -360,3 +360,171 @@
 .nitro-key:seen { background-color: rgba({{green.rgb}}, 0.18); color: {{text}}; }
 .nitro-key:active { background-color: {{green}}; color: {{crust}}; }
 .nitro-key-blank { background-color: transparent; }
+
+/* selo de limitação no canto do bloco de sensor */
+.nitro-flag {
+    font-size: 0.62em;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 100px;
+    background-color: rgba({{yellow.rgb}}, 0.18);
+    color: {{yellow}};
+}
+.nitro-flag-power { background-color: rgba({{red.rgb}}, 0.18); color: {{red}}; }
+
+/* apps usando a GPU */
+.nitro-gpuapps-pill {
+    padding: 2px 9px;
+    border-radius: 100px;
+    background-color: {{surface1}};
+    color: {{text}};
+}
+.nitro-gpuapps-pill:hover { background-color: {{surface2}}; }
+.nitro-gpuapps-pill:focus { box-shadow: inset 0 0 0 2px {{accent}}; }
+.nitro-gpuapps-pill:checked { background-color: rgba({{mauve.rgb}}, 0.22); color: {{mauve}}; }
+.nitro-gpuapps-pill-label { font-size: 0.72em; font-weight: 800; }
+.nitro-gpuapps { spacing: 3px; padding-top: 8px; border-top: 1px solid rgba({{overlay1.rgb}}, 0.18); }
+.nitro-gpuapps-row { spacing: 8px; padding: 5px 6px 5px 8px; border-radius: 9px; background-color: rgba({{crust.rgb}}, 0.45); }
+.nitro-gpuapps-icon { color: {{subtext0}}; }
+.nitro-gpuapps-name { font-size: 0.84em; font-weight: 700; color: {{text}}; }
+.nitro-gpuapps-sub { font-size: 0.72em; color: {{overlay1}}; }
+.nitro-gpuapps-stuck { color: {{red}}; }
+.nitro-gpuapps-mem { font-size: 0.72em; color: {{subtext0}}; font-feature-settings: "tnum"; }
+.nitro-gpuapps-lock { font-size: 0.68em; font-weight: 800; color: {{overlay1}}; padding: 0 6px; }
+.nitro-gpuapps-btn {
+    font-size: 0.72em;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 7px;
+    background-color: {{surface1}};
+    color: {{text}};
+}
+.nitro-gpuapps-btn:hover { background-color: {{surface2}}; }
+.nitro-gpuapps-btn:focus { box-shadow: inset 0 0 0 2px {{accent}}; }
+.nitro-gpuapps-force { background-color: rgba({{red.rgb}}, 0.2); color: {{red}}; }
+.nitro-gpuapps-force:hover { background-color: {{red}}; color: {{crust}}; }
+.nitro-gpuapps-all { font-size: 0.74em; font-weight: 700; color: {{subtext0}}; padding: 4px 6px; border-radius: 7px; }
+.nitro-gpuapps-all:hover { background-color: {{surface1}}; color: {{text}}; }
+
+/* corpo do menu e acordeão "Mais" (layout das preferências) */
+.nitro-body { spacing: 0; }
+.nitro-more { spacing: 0; }
+.nitro-more-count {
+    font-size: 0.72em;
+    font-weight: 800;
+    padding: 1px 8px;
+    border-radius: 100px;
+    background-color: {{surface1}};
+    color: {{subtext0}};
+}
+
+/* variantes do laboratório */
+.nitro-seg-compact .nitro-seg-btn { padding: 6px 2px; }
+.nitro-chart-short { height: 30px; }
+.nitro-sensor-line { spacing: 6px; padding: 8px 10px; border-radius: 12px; background-color: rgba({{surface0.rgb}}, 0.45); }
+.nitro-sensor-cell { font-size: 0.9em; font-weight: 800; font-feature-settings: "tnum"; color: {{text}}; }
+.nitro-sensor-warn { color: {{yellow}}; }
+
+/* peças de configuração */
+.nitro-piece-card { spacing: 6px; padding: 9px 12px; border-radius: 12px; background-color: rgba({{surface0.rgb}}, 0.45); }
+.nitro-piece-title { font-weight: 700; font-size: 0.86em; color: {{lavender}}; }
+.nitro-piece-line { spacing: 8px; }
+.nitro-curve-mini { height: 46px; -nitro-line: {{peach}}; }
+.nitro-status-line { spacing: 6px; }
+.nitro-status-chip { font-size: 0.74em; font-weight: 700; padding: 3px 8px; border-radius: 8px; background-color: rgba({{green.rgb}}, 0.16); color: {{green}}; }
+.nitro-status-warn { background-color: rgba({{yellow.rgb}}, 0.16); color: {{yellow}}; }
+.nitro-chipbtn {
+    padding: 3px 9px;
+    border-radius: 8px;
+    background-color: {{surface1}};
+    color: {{text}};
+    font-size: 0.78em;
+    font-weight: 700;
+}
+.nitro-chipbtn:hover { background-color: {{surface2}}; }
+.nitro-chipbtn:focus { box-shadow: inset 0 0 0 2px {{accent}}; }
+
+/* itens extras da barra */
+.nitro-panel-mode { color: {{peach}}; }
+.nitro-panel-fan { color: {{blue}}; }
+.nitro-panel-power { color: {{yellow}}; }
+
+/* ---- grade do menu (laboratório) ---- */
+.nitro-grid { padding: 0 14px 12px; }
+.nitro-item.nitro-in-grid { padding: 0; }
+
+/* ladrilho */
+.nitro-t {
+    border-radius: 16px;
+    background-color: rgba({{surface0.rgb}}, 0.62);
+    padding: 10px 11px;
+    spacing: 3px;
+    border: 1px solid transparent;
+    transition-duration: 140ms;
+}
+.nitro-t-button { padding: 0; }
+.nitro-t-button:hover { background-color: {{surface1}}; }
+.nitro-t-button:focus { border-color: {{accent}}; }
+.nitro-t-in { padding: 10px 11px; spacing: 3px; }
+.nitro-t-row { spacing: 10px; }
+.nitro-t-col { spacing: 3px; }
+.nitro-t-center { spacing: 4px; }
+.nitro-t-head { spacing: 6px; }
+.nitro-t-line { spacing: 8px; }
+.nitro-t-chips { spacing: 4px; }
+.nitro-t-label { font-size: 0.74em; font-weight: 700; color: {{subtext0}}; }
+.nitro-t-big { font-size: 1.7em; font-weight: 800; font-feature-settings: "tnum"; color: {{text}}; }
+.nitro-t-mid { font-size: 1.25em; font-weight: 800; font-feature-settings: "tnum"; color: {{text}}; }
+.nitro-t-sub { font-size: 0.72em; color: {{overlay1}}; }
+.nitro-t-name { font-size: 0.8em; font-weight: 700; color: {{text}}; }
+.nitro-t-value { font-size: 0.86em; font-weight: 800; }
+.nitro-t-icon { color: {{subtext0}}; }
+.nitro-t-eco { color: {{green}}; }
+.nitro-t-quiet { color: {{teal}}; }
+.nitro-t-balanced { color: {{blue}}; }
+.nitro-t-perf { color: {{peach}}; }
+.nitro-t-turbo { color: {{red}}; }
+.nitro-t-bar { height: 5px; border-radius: 100px; background-color: rgba({{overlay1.rgb}}, 0.22); }
+.nitro-t-fill { border-radius: 100px; }
+
+/* gráficos dos ladrilhos */
+.nitro-t-chart { min-height: 20px; }
+.nitro-t-chart-cpu { -nitro-a: {{peach}}; -nitro-b: {{green}}; }
+.nitro-t-chart-gpu { -nitro-a: {{green}}; -nitro-b: {{peach}}; }
+.nitro-t-chart-hist { -nitro-a: {{peach}}; -nitro-b: {{green}}; }
+.nitro-t-chart-curve { -nitro-a: {{peach}}; -nitro-b: {{peach}}; }
+
+/* ladrilho de interruptor */
+.nitro-t-toggle-ic { width: 30px; height: 30px; border-radius: 10px; background-color: rgba({{crust.rgb}}, 0.45); }
+.nitro-t-toggle-icon { color: {{subtext0}}; }
+.nitro-t-state { font-size: 0.72em; font-weight: 700; color: {{overlay1}}; }
+.nitro-t-button:checked { background-color: rgba({{blue.rgb}}, 0.2); }
+.nitro-t-button:checked .nitro-t-toggle-ic { background-color: {{blue}}; }
+.nitro-t-button:checked .nitro-t-toggle-icon { color: {{crust}}; }
+.nitro-t-button:checked .nitro-t-state { color: {{blue}}; }
+
+/* botões dentro de ladrilhos (perfil 2x2, ventoinhas 2x1) */
+.nitro-t-seg { border-radius: 11px; background-color: rgba({{crust.rgb}}, 0.4); padding: 3px; }
+.nitro-t-segbtn { border-radius: 8px; padding: 4px 2px; color: {{subtext0}}; border: 1px solid transparent; }
+.nitro-t-segbtn:hover { background-color: {{surface1}}; color: {{text}}; }
+.nitro-t-segbtn:focus { border-color: {{accent}}; }
+.nitro-t-segbtn:checked { background-color: rgba({{peach.rgb}}, 0.22); border-color: rgba({{peach.rgb}}, 0.55); color: {{peach}}; }
+.nitro-t-segin { spacing: 2px; }
+.nitro-t-seglabel { font-size: 0.7em; font-weight: 700; }
+.nitro-t-modechip {
+    font-size: 0.74em;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 100px;
+    background-color: rgba({{crust.rgb}}, 0.45);
+    color: {{subtext0}};
+}
+.nitro-t-modechip:hover { background-color: {{surface1}}; color: {{text}}; }
+.nitro-t-modechip.nitro-t-on { background-color: rgba({{peach.rgb}}, 0.22); color: {{peach}}; }
+.nitro-t-mini { padding: 3px; border-radius: 6px; color: {{subtext0}}; }
+.nitro-t-mini:hover { background-color: {{surface1}}; }
+
+.nitro-t-name-small { font-size: 0.74em; }
+.nitro-t .nitro-t-value { font-size: 0.78em; }
+.nitro-t .nitro-gpuapps { padding-top: 4px; border-top-width: 0; }
+.nitro-t .nitro-gpuapps-row { padding: 3px 4px 3px 6px; }

@@ -1,0 +1,4 @@
+# Nitro Indicator: o limite de carga do ANV15-51 (módulo nitro_battery) só tem fim, em 80%; não tem início.
+# Assim o UPower reconhece o limite e o "Preservar a saúde da bateria" das Configurações do GNOME manda nele.
+battery:*:*:dmi:*svnAcer:pnNitroANV15-51:*
+ CHARGE_LIMIT=_,80

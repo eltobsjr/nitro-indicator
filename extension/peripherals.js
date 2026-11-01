@@ -11,7 +11,7 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
 
 import {readText} from './utils.js';
-import {parseInputDevices, padState} from './devices.js';
+import {parseInputDevices, padState, findSdlMapping} from './devices.js';
 
 export const listInputDevices = () => parseInputDevices(readText('/proc/bus/input/devices') ?? '', _);
 
@@ -68,6 +68,57 @@ export function listBatteries(cb) {
         });
 }
 
+// ---- DPI de mouses gamer pelo ratbagd (libratbag/Piper), quando instalado ----
+
+const RATBAG = 'org.freedesktop.ratbag1';
+
+function busCall(path, iface, method, args, type) {
+    return new Promise((resolve, reject) => {
+        Gio.DBus.system.call(RATBAG, path, iface, method, args, type ? new GLib.VariantType(type) : null,
+            Gio.DBusCallFlags.NONE, 2000, null, (conn, res) => {
+                try {
+                    resolve(conn.call_finish(res));
+                } catch (e) {
+                    reject(e);
+                }
+            });
+    });
+}
+
+const allProps = async (path, iface) =>
+    (await busCall(path, 'org.freedesktop.DBus.Properties', 'GetAll', new GLib.Variant('(s)', [`${RATBAG}.${iface}`]), '(a{sv})')).recursiveUnpack()[0];
+
+// {device, name, levels: [{path, dpi, active}]} do primeiro mouse suportado, ou null
+export async function ratbagMouse() {
+    try {
+        const {Devices: devices} = await allProps('/org/freedesktop/ratbag1', 'Manager');
+        for (const device of devices ?? []) {
+            const dev = await allProps(device, 'Device');
+            for (const profile of dev.Profiles ?? []) {
+                const prof = await allProps(profile, 'Profile');
+                if (!prof.IsActive)
+                    continue;
+                const levels = [];
+                for (const path of prof.Resolutions ?? []) {
+                    const r = await allProps(path, 'Resolution');
+                    if (r.IsDisabled)
+                        continue;
+                    const dpi = Array.isArray(r.Resolution) ? r.Resolution[0] : r.Resolution;
+                    levels.push({path, dpi, active: !!r.IsActive});
+                }
+                if (levels.length)
+                    return {device, name: dev.Name, levels};
+            }
+        }
+    } catch {}
+    return null;
+}
+
+export async function ratbagSetDpi(mouse, level) {
+    await busCall(level.path, `${RATBAG}.Resolution`, 'SetActive', null, null);
+    await busCall(mouse.device, `${RATBAG}.Device`, 'Commit', null, null);
+}
+
 // ---- controles: processo nitro-input ----
 
 export const InputWatcher = GObject.registerClass({
@@ -76,9 +127,12 @@ export const InputWatcher = GObject.registerClass({
         'pad-event': {param_types: [GObject.TYPE_STRING, GObject.TYPE_JSOBJECT]},
     },
 }, class InputWatcher extends GObject.Object {
-    _init(bin) {
+    // bin: nitro-input; sdlDb: banco de mapeamentos da SDL (extension/data), lido só quando aparece um controle
+    _init(bin, sdlDb) {
         super._init();
         this._bin = bin;
+        this._sdlDb = sdlDb;
+        this._sdlText = null;
         this._users = 0;
         this._proc = null;
         this.pads = new Map();
@@ -129,8 +183,9 @@ export const InputWatcher = GObject.registerClass({
 
     _handle(ev) {
         if (ev.t === 'add') {
+            this._sdlText ??= readText(this._sdlDb) ?? '';
             this.pads.set(ev.dev, {name: ev.name, bus: ev.bus, axes: ev.axes, buttons: ev.buttons,
-                pressed: new Set(ev.pressed), abs: ev.abs});
+                pressed: new Set(ev.pressed), abs: ev.abs, sdl: findSdlMapping(this._sdlText, ev.ids)});
             this.emit('changed');
         } else if (ev.t === 'remove') {
             this.pads.delete(ev.dev);
@@ -180,7 +235,7 @@ export function describePadEvent(pad, ev) {
         return ev.value < 0 ? '←' : '→';
     if (ev.code === 17 && ev.value)
         return ev.value < 0 ? '↑' : '↓';
-    const s = padState(pad);
+    const s = padState(pad, pad.sdl);
     if (s.lt > 0.5 && [2, 10].includes(ev.code))
         return 'LT';
     if (s.rt > 0.5 && [5, 9].includes(ev.code))
@@ -494,8 +549,32 @@ class PeripheralsDialog extends ModalDialog.ModalDialog {
         wrap.add_child(body);
         const down = new St.Label({text: '▼', style_class: 'nitro-scroll', x_align: Clutter.ActorAlign.CENTER});
         wrap.add_child(down);
+        // níveis de DPI (só com ratbagd e um mouse suportado)
+        this._dpi = new St.BoxLayout({style_class: 'nitro-seg nitro-dpi', visible: false});
+        wrap.add_child(this._dpi);
+        ratbagMouse().then(mouse => this._renderDpi(mouse));
         this._mouse = {1: left, 2: mid, 3: right, 8: back, 9: fwd, up, down};
         return wrap;
+    }
+
+    _renderDpi(mouse) {
+        if (!this._dpi || !mouse)
+            return;
+        this._dpi.destroy_all_children();
+        this._dpi.visible = true;
+        for (const level of mouse.levels) {
+            const b = new St.Button({label: `${level.dpi}`, style_class: 'nitro-seg-btn nitro-balanced', can_focus: true,
+                accessible_name: `${level.dpi} DPI`});
+            if (level.active)
+                b.add_style_pseudo_class('checked');
+            b.connect('clicked', () => ratbagSetDpi(mouse, level)
+                .then(() => ratbagMouse()).then(m => this._renderDpi(m))
+                .catch(e => (this._log.text = `DPI: ${e.message}`)));
+            this._dpi.add_child(b);
+        }
+        const card = this._mouse[1]?.get_parent()?.get_parent()?.get_parent()?.get_parent()?.get_parent();
+        if (card?._note)
+            card._note.text = `${mouse.name} · DPI`;
     }
 
     // ---- controle ----
@@ -555,7 +634,7 @@ class PeripheralsDialog extends ModalDialog.ModalDialog {
         this._padChipMap = new Map();
         const card = this._padChips.get_parent()?.get_parent();
         if (card?._note)
-            card._note.text = cur ? cur[1].name : '';
+            card._note.text = cur ? `${cur[1].sdl?.name ?? cur[1].name} · ${cur[1].sdl ? 'SDL' : 'kernel'}` : '';
         if (!cur)
             return;
         // todo botão que o aparelho diz ter, mesmo os que o desenho não mostra
@@ -568,18 +647,19 @@ class PeripheralsDialog extends ModalDialog.ModalDialog {
     }
 
     _paintPad(pad) {
-        const s = padState(pad);
+        // o desenho segue os nomes (A embaixo, Y em cima…); com mapeamento da SDL eles vêm do banco
+        const s = padState(pad, pad.sdl);
         const set = (actor, on) => on ? actor.add_style_pseudo_class('active') : actor.remove_style_pseudo_class('active');
-        for (const code of [304, 305, 307, 308, 310, 311, 314, 315, 316])
-            set(this._pad[code], pad.pressed.has(code));
+        for (const [name, code] of [['a', 304], ['b', 305], ['y', 307], ['x', 308], ['lb', 310], ['rb', 311], ['back', 314], ['start', 315], ['guide', 316]])
+            set(this._pad[code], s.btn[name]);
         set(this._pad.up, s.up);
         set(this._pad.down, s.down);
         set(this._pad.left, s.left_);
         set(this._pad.right, s.right_);
-        for (const [key, which, l3] of [['l', s.left, 317], ['r', s.right, 318]]) {
+        for (const [key, which, click] of [['l', s.left, s.btn.l3], ['r', s.right, s.btn.r3]]) {
             const v = which ?? [0, 0];
             this._pad[key].dot.set_position(19 + Math.round(v[0] * 17), 19 + Math.round(v[1] * 17));
-            set(this._pad[key].ring, pad.pressed.has(l3) || Math.hypot(v[0], v[1]) > 0.25);
+            set(this._pad[key].ring, click || Math.hypot(v[0], v[1]) > 0.25);
         }
         this._pad.lt.height = Math.round(s.lt * 30);
         this._pad.rt.height = Math.round(s.rt * 30);
@@ -675,6 +755,7 @@ class PeripheralsDialog extends ModalDialog.ModalDialog {
     }
 
     _cleanup() {
+        this._dpi = null;
         this._watcher.disconnect(this._padId);
         this._watcher.disconnect(this._padsId);
         this._watcher.release();

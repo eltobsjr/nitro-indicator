@@ -53,6 +53,9 @@ Detalhes do padrão visual em [`docs/DESIGN.md`](docs/DESIGN.md).
 | `/etc/tuned/profiles/nitro-performance` + `/etc/tuned/ppd.conf` | Integração com o **tuned-ppd**: o "Desempenho" das Configurações rápidas passa a pedir o perfil Acer que o firmware aceita (o original pedia `performance`, recusado com EIO). Backup em `ppd.conf.nitro-orig` |
 | `~/.local/bin/nitro-mode` | Comando dos modos (sem root); também serve para lançadores de jogos |
 | `~/.local/bin/nitro-input` | Leitor de controles (sem root; o systemd já dá acesso aos joysticks). Só roda com o menu ou o testador aberto |
+| `~/.local/bin/nitro-gpuapps` | Lista os processos com a GPU NVIDIA aberta e encerra os seus (sem root) |
+| `/etc/udev/hwdb.d/61-nitro-battery.hwdb` | Faz o UPower (e o GNOME) enxergar o limite de carga do `nitro_battery` |
+| `~/.config/gamemode.ini` | Só se você não tiver um: o GameMode chama o `nitro-mode` ao abrir e fechar jogos |
 | `~/.local/share/nitro/defaults.json` | Campos e modos de fábrica: fonte única para a extensão e o `nitro-mode` |
 | `~/.local/share/gnome-shell/extensions/nitro@eltobsjr.gmail.com` | A extensão |
 
@@ -63,8 +66,18 @@ Se o `acer_wmi` já estiver carregado, ele é recarregado na hora com `predator_
 - **Ícone na barra** com a cor do modo atual + temperatura da CPU (fica vermelha a
   partir de 90 °C).
 - **Cartão do topo**: modo atual e se está na tomada ou na bateria.
-- Ordem do menu: Perfil, Ventoinhas, Limite de carga, Sensores, Modos, Periféricos e GPU.
-  O cartão do topo fica fixo e o resto **rola** (em tela de 900 px o menu inteiro não cabe). Perfil e Ventoinhas são
+- Ordem do menu (padrão): Perfil, Ventoinhas, Limite de carga, Sensores, Histórico, Modos,
+  Periféricos e GPU. O cartão do topo fica fixo e o resto **rola**. **Tudo isso é editável** em
+  Preferências › Layout (veja abaixo).
+- **Selo "LIMITANDO"** no canto do bloco da CPU quando o kernel registrou limitação por
+  temperatura nos últimos 30 s; na GPU, também "NO LIMITE" quando ela está presa no limite de
+  energia (motivos do `nvidia-smi`).
+- **Na bateria**, o subtítulo do topo mostra consumo e tempo restante ("Na bateria · 11,8 W ·
+  2 h 40 min"), e a linha do limite de carga mostra a saúde da bateria e os ciclos.
+- **Apps usando a GPU**: a pílula "N apps" no cartão da GPU abre a lista de processos que estão
+  com a placa aberta (lida em `/proc`, sem acordá-la), com **Fechar** (SIGTERM) e **Forçar**
+  (SIGKILL) sempre à mão. Processos da sessão (`gnome-shell`, Xwayland) aparecem como
+  "sistema" e sem botões; só dá para encerrar processos seus. Perfil e Ventoinhas são
   controles segmentados (só o item ativo recebe cor) e cada grupo tem o mesmo título em
   lavender.
 - **Perfil** — os mesmos perfis do NitroSense:
@@ -129,14 +142,32 @@ O último modo escolhido fica em `~/.local/state/nitro/profile` e é **reaplicad
 login** (o firmware volta para `balanced` a cada boot); ventoinhas e limite de carga também,
 mas só quando estão diferentes do salvo (nada de `pkexec` a cada desbloqueio de tela).
 
+## Laboratório (Preferências › Laboratório)
+
+O menu é uma **grade de 4 colunas** que você monta arrastando:
+
+- **Layouts prontos**: Clássico (o menu de sempre), Compacto, Central de controle, Gamer e Mínimo.
+- **Posição livre**: cada item vai na célula que você escolher; nada se encaixa sozinho e buracos
+  são permitidos. A prévia fica verde quando cabe e vermelha quando sobrepõe.
+- **Tamanhos**: ladrilhos 1×1, 2×1, 2×2 e 4×2 (CPU, GPU, cada ventoinha, bateria, perfil, limite de
+  carga, 60 Hz, GameMode, histórico, curva, apps da GPU com Fechar/Forçar…) ou o **bloco clássico** de
+  largura inteira, com as variantes de antes (faixa com ícones ou só nomes, sensores 2×2 ou em uma
+  linha, histórico normal ou curto, GPU completa ou só o título).
+- **Distância entre os itens**: 0 a 24 px.
+- **Barra superior**: ícone, temperaturas, modo ligado, rotação e consumo, na ordem que quiser.
+- Teclado: setas movem uma célula, + e − trocam o tamanho, Delete tira, Enter abre as opções.
+
+Por baixo são as chaves `grid-items` (`id:tamanho:linha:coluna`), `grid-gap` e `panel-items`.
+
 ## Preferências
 
 `gnome-extensions prefs nitro@eltobsjr.gmail.com` (ou *Editar modos…* no menu):
 
-- **Geral**: temperatura da GPU na barra (só com a GPU acordada), histórico, periféricos,
-  tecla NitroSense, **perfil automático na tomada e na bateria**, e um **estado do sistema**
-  que diz o que está instalado e funcionando (ventoinhas, limite de carga, integração com o
-  PPD, perfil da plataforma).
+- **Geral**: tecla NitroSense, **perfil automático na tomada e na bateria**, **tela a 60 Hz
+  na bateria** (só a tela do notebook; a taxa de antes volta na tomada), **modo de jogo pelo
+  GameMode** (cria/apaga um `~/.config/gamemode.ini` que chama `nitro-mode auto-start` e
+  `auto-stop`; funciona com a extensão desligada) e um **estado do sistema** (ventoinhas,
+  limite de carga, integração com o PPD e com as Configurações do GNOME, thermald, ratbagd).
 - **Modos**: editor completo dos modos (substitui o editor que ficava dentro do menu).
 - **Curva de ventoinha**: pontos °C → % com gráfico; *Salvar curva* grava via `pkexec`.
 
@@ -151,7 +182,22 @@ tomada reaplicava o perfil dele por cima do escolhido. Agora:
 - com a integração, Eco, Equilibrado e Performance da extensão passam pelo próprio PPD, e as
   Configurações rápidas ficam em sincronia (Silencioso não tem equivalente e vai direto);
 - ao trocar a fonte de energia, a extensão espera o tuned terminar e devolve o perfil
-  escolhido (ou o automático da tomada/bateria, se configurado).
+  escolhido (ou o automático da tomada/bateria, se configurado);
+- o **Silencioso** não tem par no GNOME: a extensão põe o PPD em Equilibrado (o mais perto) e
+  o Silencioso por cima, que o tuned-ppd não desfaz.
+
+O **limite de carga** também entra nas Configurações do GNOME: o instalador põe uma entrada no
+hwdb do UPower (`/etc/udev/hwdb.d/61-nitro-battery.hwdb`, `CHARGE_LIMIT=_,80`), e aí o
+"Preservar a saúde da bateria" e o interruptor do menu mandam no mesmo limite (o menu passa a
+usar o UPower quando ele reconhece a bateria).
+
+## Periféricos
+
+- **Controles**: os nomes dos botões vêm do banco de mapeamentos da SDL (o mesmo do Steam,
+  `extension/data/gamecontrollerdb-linux.txt`) quando o controle está nele; senão, do kernel. O
+  cartão do testador diz qual ("SDL" ou "kernel").
+- **DPI do mouse**: com o `ratbagd` (pacote `libratbag-ratbagd`) e um mouse suportado, o
+  testador mostra os níveis de DPI e troca o ativo.
 
 ## Limitações
 

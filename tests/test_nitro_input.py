@@ -11,7 +11,7 @@ class InputTest(unittest.TestCase):
         cls.text = (ROOT / 'tests' / 'fixtures' / 'input-devices.txt').read_text()
 
     def test_so_o_controle_vira_gamepad(self):
-        self.assertEqual(self.ni.gamepads(self.text), {'event23': ('Zikway HID gamepad', 'usb')})
+        self.assertEqual(self.ni.gamepads(self.text), {'event23': ('Zikway HID gamepad', 'usb', [0x03, 0x3537, 0x1041, 0x0111])})
 
     def test_sem_controle(self):
         self.assertEqual(self.ni.gamepads('I: Bus=0011\nN: Name="Teclado"\nH: Handlers=kbd event3\n'), {})

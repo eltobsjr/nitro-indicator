@@ -3,7 +3,7 @@ EXT  = extension
 DEST = $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 STATE = $(or $(XDG_STATE_HOME),$(HOME)/.local/state)/nitro
 
-.PHONY: all install uninstall enable disable check test po kmod pack clean
+.PHONY: all install uninstall enable disable check test po kmod sdldb pack clean
 
 all: install
 
@@ -31,6 +31,13 @@ po:
 kmod:
 	@$(MAKE) -s -C system/kmod && $(MAKE) -s -C system/kmod clean >/dev/null && echo "kmod ok"
 
+# Atualiza o banco de mapeamentos de controles da SDL (só as entradas de Linux)
+sdldb:
+	@curl -sfL https://raw.githubusercontent.com/mdqinc/SDL_GameControllerDB/master/gamecontrollerdb.txt | \
+		{ echo "# SDL_GameControllerDB (https://github.com/mdqinc/SDL_GameControllerDB), só as entradas de Linux."; \
+		  echo "# Licença zlib (a mesma do SDL). Atualizar: make sdldb"; grep "platform:Linux"; } > $(EXT)/data/gamecontrollerdb-linux.txt
+	@echo "$$(grep -c platform:Linux $(EXT)/data/gamecontrollerdb-linux.txt) mapeamentos"
+
 # Testes automáticos (sem root, sem mexer no hardware): Python dos helpers + checagem estática
 test: check
 	@python3 -m unittest discover -s tests -t . -q
@@ -40,7 +47,7 @@ check:
 	@d=$$(mktemp -d); for f in $$(find $(EXT) -name '*.js'); do \
 		cp $$f $$d/x.mjs && node --check $$d/x.mjs || { rm -rf $$d; exit 1; }; done; rm -rf $$d
 	@python3 -m py_compile scripts/eltob-setup.py && rm -rf scripts/__pycache__
-	@for f in system/nitro-mode system/nitro-boost system/nitro-fancurve system/nitro-input; do python3 -c "import ast,sys; ast.parse(open('$$f').read())" || exit 1; done
+	@for f in system/nitro-mode system/nitro-boost system/nitro-fancurve system/nitro-input system/nitro-gpuapps; do python3 -c "import ast,sys; ast.parse(open('$$f').read())" || exit 1; done
 	@for f in system/nitro-fan system/nitro-battery system/nitro-profile install.sh uninstall.sh; do sh -n $$f 2>/dev/null || bash -n $$f || exit 1; done
 	@xmllint --noout system/com.eltobsjr.nitro.policy $(EXT)/schemas/*.xml
 	@msgfmt --check -o /dev/null po/pt_BR.po

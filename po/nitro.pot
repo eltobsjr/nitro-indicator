@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 02:47-0300\n"
+"POT-Creation-Date: 2026-11-01 04:00-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,167 +21,697 @@ msgstr ""
 msgid "Laptop keyboard"
 msgstr ""
 
-#: extension/extension.js:42 extension/prefs.js:17
+#: extension/extension.js:54 extension/lab.js:145 extension/lab.js:215
+#: extension/lab.js:330 extension/lab.js:368 extension/pieces.js:13
+#: extension/prefs.js:46
 msgid "Eco"
 msgstr ""
 
-#: extension/extension.js:43 extension/prefs.js:18
+#: extension/extension.js:55 extension/lab.js:145 extension/lab.js:330
+#: extension/pieces.js:13 extension/prefs.js:47
 msgid "Quiet"
 msgstr ""
 
-#: extension/extension.js:44 extension/prefs.js:19
+#: extension/extension.js:56 extension/lab.js:146 extension/lab.js:331
+#: extension/pieces.js:13 extension/prefs.js:48
 msgid "Balanced"
 msgstr ""
 
-#: extension/extension.js:45 extension/prefs.js:20
+#: extension/extension.js:57 extension/lab.js:146 extension/lab.js:215
+#: extension/lab.js:326 extension/lab.js:331 extension/lab.js:368
+#: extension/pieces.js:13 extension/prefs.js:49
 msgid "Performance"
 msgstr ""
 
-#: extension/extension.js:50 extension/prefs.js:193
+#: extension/extension.js:62 extension/lab.js:150 extension/lab.js:349
+#: extension/prefs.js:245
 msgid "Auto"
 msgstr ""
 
-#: extension/extension.js:51 extension/prefs.js:193
+#: extension/extension.js:63 extension/lab.js:150 extension/lab.js:345
+#: extension/lab.js:349 extension/prefs.js:245
 msgid "Max"
 msgstr ""
 
-#: extension/extension.js:52 extension/prefs.js:193
+#: extension/extension.js:64 extension/lab.js:150 extension/lab.js:349
+#: extension/prefs.js:245
 msgid "Curve"
 msgstr ""
 
-#: extension/extension.js:184 extension/prefs.js:187
+#: extension/extension.js:297 extension/lab.js:144 extension/lab.js:323
+#: extension/lab.js:328 extension/layout.js:17 extension/prefs.js:239
+#: extension/tiles.js:229 extension/tiles.js:231 extension/tiles.js:242
+#: extension/tiles.js:245
 msgid "Profile"
 msgstr ""
 
-#: extension/extension.js:197 extension/prefs.js:192
+#: extension/extension.js:308 extension/extension.js:824 extension/lab.js:149
+#: extension/lab.js:249 extension/lab.js:341 extension/layout.js:19
+#: extension/prefs.js:244 extension/tiles.js:249 extension/tiles.js:251
+#: extension/tiles.js:265
 msgid "Fans"
 msgstr ""
 
-#: extension/extension.js:214 extension/extension.js:222
+#: extension/extension.js:327 extension/extension.js:335 extension/lab.js:153
+#: extension/tiles.js:268
 msgid "Limit charge to 80%"
 msgstr ""
 
-#: extension/extension.js:228
+#: extension/extension.js:341 extension/lab.js:156 extension/layout.js:23
 msgid "Sensors"
 msgstr ""
 
-#: extension/extension.js:231
+#: extension/extension.js:346 extension/lab.js:163 extension/lab.js:309
+#: extension/layout.js:29 extension/tiles.js:192
 msgid "Fan 1"
 msgstr ""
 
-#: extension/extension.js:231
+#: extension/extension.js:346 extension/lab.js:163 extension/lab.js:309
+#: extension/layout.js:31 extension/tiles.js:192
 msgid "Fan 2"
 msgstr ""
 
-#: extension/extension.js:297
+#: extension/extension.js:421
 msgid "Sleeping — saving power"
 msgstr ""
 
-#: extension/extension.js:433 extension/prefs.js:88
-msgid "On battery"
+#: extension/extension.js:551 extension/tiles.js:169 extension/tiles.js:179
+msgid "THROTTLING"
 msgstr ""
 
-#: extension/extension.js:433 extension/prefs.js:88
-msgid "Plugged in"
+#: extension/extension.js:551 extension/tiles.js:179
+msgid "POWER LIMIT"
 msgstr ""
 
-#: extension/extension.js:503
+#: extension/extension.js:750 extension/lab.js:201
 msgid "Active"
 msgstr ""
 
-#: extension/extension.js:503
+#: extension/extension.js:750 extension/tiles.js:182
 msgid "Sleeping"
 msgstr ""
 
-#: extension/extension.js:512
+#: extension/extension.js:760 extension/tiles.js:182
 #, javascript-format
 msgid "Load %s"
 msgstr ""
 
-#: extension/extension.js:536
+#: extension/extension.js:779 extension/pieces.js:13
+msgid "Keep"
+msgstr ""
+
+#: extension/extension.js:789 extension/extension.js:1174 extension/lab.js:319
+#, javascript-format
+msgid "health %d%%"
+msgstr ""
+
+#: extension/extension.js:792 extension/extension.js:1072
+#, javascript-format
+msgid "%d h %d min"
+msgstr ""
+
+#: extension/extension.js:792 extension/extension.js:1072
+#, javascript-format
+msgid "%d min"
+msgstr ""
+
+#: extension/extension.js:801 extension/extension.js:846
 #, javascript-format
 msgid "%d–%d °C · last 3 min"
 msgstr ""
 
-#: extension/extension.js:537
+#: extension/extension.js:801 extension/extension.js:847
 msgid "collecting…"
 msgstr ""
 
-#: extension/extension.js:672 extension/extension.js:767
-#: extension/extension.js:796
+#: extension/extension.js:825 extension/lab.js:249 extension/layout.js:21
+#: extension/prefs.js:145
+msgid "Charge limit"
+msgstr ""
+
+#: extension/extension.js:987 extension/extension.js:1151
+#: extension/extension.js:1217
 msgid "Authorization cancelled."
 msgstr ""
 
-#: extension/extension.js:672
+#: extension/extension.js:987
 #, javascript-format
 msgid "Could not switch to %s"
 msgstr ""
 
-#: extension/extension.js:754
+#: extension/extension.js:1064 extension/lab.js:215 extension/lab.js:368
+#: extension/lab.js:531 extension/pieces.js:94 extension/prefs.js:107
+#: extension/tiles.js:289
+msgid "Plugged in"
+msgstr ""
+
+#: extension/extension.js:1065 extension/lab.js:215 extension/lab.js:368
+#: extension/pieces.js:94 extension/prefs.js:107 extension/tiles.js:221
+#: extension/tiles.js:289
+msgid "On battery"
+msgstr ""
+
+#: extension/extension.js:1138
 msgid "Fixed max speed"
 msgstr ""
 
-#: extension/extension.js:754
+#: extension/extension.js:1138
 msgid "Following the curve"
 msgstr ""
 
-#: extension/extension.js:754
+#: extension/extension.js:1138
 msgid "Fixed speed"
 msgstr ""
 
-#: extension/extension.js:755
+#: extension/extension.js:1139
 msgid "BIOS in control"
 msgstr ""
 
-#: extension/extension.js:756
+#: extension/extension.js:1140
 msgid ""
 "Fan control unavailable: the nitro_fan module is not loaded. Run ./"
 "install.sh again (the kernel may have been updated)."
 msgstr ""
 
-#: extension/extension.js:767
+#: extension/extension.js:1151
 msgid "Could not change the fans"
 msgstr ""
 
-#: extension/extension.js:787
-msgid "Stops at 80% to extend battery life"
+#: extension/extension.js:1176
+#, javascript-format
+msgid "%d cycles"
 msgstr ""
 
-#: extension/extension.js:787
+#: extension/extension.js:1195
+msgid "Stops at 80%"
+msgstr ""
+
+#: extension/extension.js:1195
 msgid "Charges up to 100%"
 msgstr ""
 
-#: extension/extension.js:796
+#: extension/extension.js:1207 extension/extension.js:1217
 msgid "Could not change the charge limit"
 msgstr ""
 
-#: extension/extension.js:811
+#: extension/extension.js:1232
 msgid "Mode"
 msgstr ""
 
-#: extension/extension.js:811
+#: extension/extension.js:1232
 msgid "Could not apply the mode."
 msgstr ""
 
-#: extension/extension.js:881
+#: extension/extension.js:1304
 #, javascript-format
 msgid "%s mode"
 msgstr ""
 
-#: extension/modes.js:28 extension/modes.js:36 extension/prefs.js:122
-#: extension/prefs.js:123
+#: extension/gpuapps.js:90
+msgid "1 app"
+msgstr ""
+
+#: extension/gpuapps.js:90 extension/lab.js:200
+#, javascript-format
+msgid "%d apps"
+msgstr ""
+
+#: extension/gpuapps.js:105
+#, javascript-format
+msgid "+%d more"
+msgstr ""
+
+#: extension/gpuapps.js:108
+#, javascript-format
+msgid "Close all mine (%d)"
+msgstr ""
+
+#: extension/gpuapps.js:131
+msgid "did not respond"
+msgstr ""
+
+#: extension/gpuapps.js:134
+msgid "closing…"
+msgstr ""
+
+#: extension/gpuapps.js:143 extension/lab.js:407
+msgid "system"
+msgstr ""
+
+#: extension/gpuapps.js:153 extension/peripherals.js:480
+msgid "Close"
+msgstr ""
+
+#: extension/gpuapps.js:154 extension/lab.js:407
+msgid "Force"
+msgstr ""
+
+#: extension/lab.js:184 extension/lab.js:385 extension/layout.js:37
+#: extension/modes.js:28 extension/modes.js:34 extension/modes.js:43
+#: extension/prefs.js:174 extension/prefs.js:175 extension/tiles.js:357
 msgid "Modes"
 msgstr ""
 
-#: extension/modes.js:39
+#: extension/lab.js:191 extension/lab.js:394 extension/layout.js:39
+#: extension/peripherals.js:306 extension/peripherals.js:312
+#: extension/tiles.js:385
+msgid "Peripherals"
+msgstr ""
+
+#: extension/lab.js:214 extension/lab.js:366 extension/layout.js:49
+#: extension/pieces.js:92 extension/prefs.js:104 extension/tiles.js:286
+msgid "Automatic profile"
+msgstr ""
+
+#: extension/lab.js:225 extension/layout.js:51 extension/pieces.js:52
+#: extension/prefs.js:109
+msgid "60 Hz screen on battery"
+msgstr ""
+
+#: extension/lab.js:228 extension/layout.js:53 extension/pieces.js:58
+msgid "Game mode through GameMode"
+msgstr ""
+
+#: extension/lab.js:231 extension/lab.js:363 extension/layout.js:55
+#: extension/pieces.js:55 extension/prefs.js:99 extension/tiles.js:280
+msgid "NitroSense key"
+msgstr ""
+
+#: extension/lab.js:236 extension/lab.js:380 extension/layout.js:45
+#: extension/pieces.js:121 extension/prefs.js:305 extension/prefs.js:306
+#: extension/tiles.js:323
+msgid "Fan curve"
+msgstr ""
+
+#: extension/lab.js:237 extension/pieces.js:122 extension/tiles.js:324
+msgid "Edit"
+msgstr ""
+
+#: extension/lab.js:245 extension/peripherals.js:322 extension/pieces.js:78
+#: extension/tiles.js:383 extension/tiles.js:430
+msgid "Test peripherals…"
+msgstr ""
+
+#: extension/lab.js:245 extension/pieces.js:78 extension/tiles.js:430
+msgid "Preferences…"
+msgstr ""
+
+#: extension/lab.js:292 extension/tiles.js:123
+msgid "On"
+msgstr ""
+
+#: extension/lab.js:292 extension/pieces.js:67 extension/tiles.js:123
+msgid "Off"
+msgstr ""
+
+#: extension/lab.js:316 extension/layout.js:33 extension/tiles.js:221
+msgid "Battery"
+msgstr ""
+
+#: extension/lab.js:354 extension/tiles.js:268
+msgid "Limit 80%"
+msgstr ""
+
+#: extension/lab.js:357 extension/tiles.js:272
+msgid "60 Hz on battery"
+msgstr ""
+
+#: extension/lab.js:403 extension/layout.js:43 extension/tiles.js:403
+msgid "Apps using the GPU"
+msgstr ""
+
+#: extension/lab.js:412 extension/tiles.js:417
+msgid "System"
+msgstr ""
+
+#: extension/lab.js:424 extension/tiles.js:436
+msgid "Test peripherals"
+msgstr ""
+
+#: extension/lab.js:424 extension/layout.js:59 extension/tiles.js:436
+msgid "Preferences"
+msgstr ""
+
+#: extension/lab.js:458
+msgid ""
+"Build your menu on a 4-column grid. Drag items from the drawer to the exact "
+"cell you want; nothing snaps into place on its own. Click an item to pick "
+"its size. Keyboard: arrows move one cell, + and − change the size, Delete "
+"takes it out, Enter opens the options. Changes apply right away."
+msgstr ""
+
+#: extension/lab.js:469
+msgid "Ready-made layouts"
+msgstr ""
+
+#: extension/lab.js:482
+msgid "Space between items"
+msgstr ""
+
+#: extension/lab.js:494
+msgid "Drawer"
+msgstr ""
+
+#: extension/lab.js:495
+msgid ""
+"Drag to the grid, or press Enter to put it in the first free spot. Drop here "
+"to take an item out."
+msgstr ""
+
+#: extension/lab.js:499
+msgid "Outside the top bar"
+msgstr ""
+
+#: extension/lab.js:507
+msgid "Menu height"
+msgstr ""
+
+#: extension/lab.js:516
+msgid "Activities"
+msgstr ""
+
+#: extension/lab.js:517
+msgid "Sun 1 Nov 03:20"
+msgstr ""
+
+#: extension/lab.js:534
+msgid "fixed"
+msgstr ""
+
+#: extension/lab.js:593
+msgid "Full width"
+msgstr ""
+
+#: extension/lab.js:594
+msgid "Does not fit here: move it first"
+msgstr ""
+
+#: extension/lab.js:606
+msgid "Show the title"
+msgstr ""
+
+#: extension/lab.js:615
+msgid "Take out of the menu"
+msgstr ""
+
+#: extension/lab.js:822
+msgid "drag to move, click for the size"
+msgstr ""
+
+#: extension/lab.js:865
+msgid "Drag to the grid or press Enter"
+msgstr ""
+
+#: extension/lab.js:881
+msgid "Everything is in the menu"
+msgstr ""
+
+#: extension/lab.js:892
+msgid "icon"
+msgstr ""
+
+#: extension/lab.js:904
+#, javascript-format
+msgid "%d px: fits your smallest screen (%d px) without scrolling"
+msgstr ""
+
+#: extension/lab.js:905
+#, javascript-format
+msgid "%d px: %d px more than your smallest screen; the menu will scroll"
+msgstr ""
+
+#: extension/layout.js:18 extension/layout.js:20
+msgid "Bar with icons"
+msgstr ""
+
+#: extension/layout.js:18 extension/layout.js:20
+msgid "Bar, names only"
+msgstr ""
+
+#: extension/layout.js:18 extension/layout.js:20
+msgid "Square: tap to change"
+msgstr ""
+
+#: extension/layout.js:18
+msgid "Four buttons"
+msgstr ""
+
+#: extension/layout.js:20
+msgid "Three buttons"
+msgstr ""
+
+#: extension/layout.js:22 extension/layout.js:52 extension/layout.js:54
+#: extension/layout.js:56
+msgid "Switch row"
+msgstr ""
+
+#: extension/layout.js:22 extension/layout.js:52 extension/layout.js:54
+#: extension/layout.js:56
+msgid "Square button"
+msgstr ""
+
+#: extension/layout.js:22
+msgid "Button with health"
+msgstr ""
+
+#: extension/layout.js:24
+msgid "2 × 2 blocks"
+msgstr ""
+
+#: extension/layout.js:24
+msgid "One line"
+msgstr ""
+
+#: extension/layout.js:25 extension/layout.js:221
+msgid "CPU temperature"
+msgstr ""
+
+#: extension/layout.js:26 extension/layout.js:28 extension/layout.js:30
+#: extension/layout.js:32
+msgid "Number"
+msgstr ""
+
+#: extension/layout.js:26
+msgid "Number and chart"
+msgstr ""
+
+#: extension/layout.js:26 extension/layout.js:28
+msgid "Large chart"
+msgstr ""
+
+#: extension/layout.js:27 extension/layout.js:222
+msgid "GPU temperature"
+msgstr ""
+
+#: extension/layout.js:28
+msgid "Temperature, watts and load"
+msgstr ""
+
+#: extension/layout.js:30 extension/layout.js:32
+msgid "Number and bar"
+msgstr ""
+
+#: extension/layout.js:34
+msgid "Charge"
+msgstr ""
+
+#: extension/layout.js:34
+msgid "Charge, watts and time"
+msgstr ""
+
+#: extension/layout.js:35
+msgid "Temperature history"
+msgstr ""
+
+#: extension/layout.js:36
+msgid "Normal bar"
+msgstr ""
+
+#: extension/layout.js:36
+msgid "Short bar"
+msgstr ""
+
+#: extension/layout.js:36
+msgid "Small"
+msgstr ""
+
+#: extension/layout.js:36
+msgid "Large"
+msgstr ""
+
+#: extension/layout.js:38 extension/layout.js:40
+msgid "Accordion"
+msgstr ""
+
+#: extension/layout.js:38 extension/layout.js:223
+msgid "Mode on"
+msgstr ""
+
+#: extension/layout.js:40
+msgid "Icons"
+msgstr ""
+
+#: extension/layout.js:41
+msgid "NVIDIA GPU"
+msgstr ""
+
+#: extension/layout.js:42
+msgid "Complete card"
+msgstr ""
+
+#: extension/layout.js:42
+msgid "Title only"
+msgstr ""
+
+#: extension/layout.js:44
+msgid "List"
+msgstr ""
+
+#: extension/layout.js:44
+msgid "List with Close and Force"
+msgstr ""
+
+#: extension/layout.js:46
+msgid "Bar with chart"
+msgstr ""
+
+#: extension/layout.js:46
+msgid "Square chart"
+msgstr ""
+
+#: extension/layout.js:47 extension/prefs.js:134
+msgid "System status"
+msgstr ""
+
+#: extension/layout.js:48
+msgid "Line of badges"
+msgstr ""
+
+#: extension/layout.js:48
+msgid "Badges"
+msgstr ""
+
+#: extension/layout.js:50
+msgid "Two lines"
+msgstr ""
+
+#: extension/layout.js:50 extension/layout.js:199
+msgid "Compact"
+msgstr ""
+
+#: extension/layout.js:52 extension/layout.js:54
+msgid "Button with text"
+msgstr ""
+
+#: extension/layout.js:57 extension/peripherals.js:462
+msgid "Peripheral tester"
+msgstr ""
+
+#: extension/layout.js:58 extension/layout.js:60
+msgid "Button"
+msgstr ""
+
+#: extension/layout.js:58 extension/layout.js:60
+msgid "Square"
+msgstr ""
+
+#: extension/layout.js:63
+msgid "Readings"
+msgstr ""
+
+#: extension/layout.js:63
+msgid "Controls"
+msgstr ""
+
+#: extension/layout.js:63
+msgid "Panels"
+msgstr ""
+
+#: extension/layout.js:63
+msgid "Shortcuts"
+msgstr ""
+
+#: extension/layout.js:196
+msgid "Classic"
+msgstr ""
+
+#: extension/layout.js:196
+msgid "The menu you are used to"
+msgstr ""
+
+#: extension/layout.js:199
+msgid "Classic, smaller: fits a 900 px screen"
+msgstr ""
+
+#: extension/layout.js:203
+msgid "Control center"
+msgstr ""
+
+#: extension/layout.js:203
+msgid "Tiles side by side, like a phone"
+msgstr ""
+
+#: extension/layout.js:208
+msgid "Gamer"
+msgstr ""
+
+#: extension/layout.js:208
+msgid "Temperatures, GPU and its apps first"
+msgstr ""
+
+#: extension/layout.js:211
+msgid "Minimal"
+msgstr ""
+
+#: extension/layout.js:211
+msgid "Just the essentials in two rows"
+msgstr ""
+
+#: extension/layout.js:220
+msgid "Profile icon"
+msgstr ""
+
+#: extension/layout.js:220
+msgid "Color of the current profile"
+msgstr ""
+
+#: extension/layout.js:221
+msgid "Turns red from 90 °C"
+msgstr ""
+
+#: extension/layout.js:222
+msgid "Only while the GPU is awake"
+msgstr ""
+
+#: extension/layout.js:223
+msgid "Name of the mode that is on"
+msgstr ""
+
+#: extension/layout.js:224
+msgid "Fan speed"
+msgstr ""
+
+#: extension/layout.js:224
+msgid "Fastest fan, in rpm"
+msgstr ""
+
+#: extension/layout.js:225
+msgid "Power draw"
+msgstr ""
+
+#: extension/layout.js:225
+msgid "Watts, only on battery"
+msgstr ""
+
+#: extension/modes.js:38 extension/tiles.js:358
 msgid "Edit modes…"
 msgstr ""
 
-#: extension/modes.js:99 extension/modes.js:123
+#: extension/modes.js:104 extension/modes.js:128
 msgid "Applying…"
 msgstr ""
 
-#: extension/modes.js:105
+#: extension/modes.js:110
 msgid "None on"
 msgstr ""
 
@@ -210,310 +740,327 @@ msgstr ""
 msgid "forward button"
 msgstr ""
 
-#: extension/peripherals.js:190
+#: extension/peripherals.js:245
 msgid "left stick"
 msgstr ""
 
-#: extension/peripherals.js:192
+#: extension/peripherals.js:247
 msgid "right stick"
 msgstr ""
 
-#: extension/peripherals.js:200
+#: extension/peripherals.js:255
 #, javascript-format
 msgid "button %d"
 msgstr ""
 
-#: extension/peripherals.js:209 extension/peripherals.js:661
+#: extension/peripherals.js:264 extension/peripherals.js:741
 msgid "scroll up"
 msgstr ""
 
-#: extension/peripherals.js:209
+#: extension/peripherals.js:264
 msgid "scroll down"
 msgstr ""
 
-#: extension/peripherals.js:210
+#: extension/peripherals.js:265
 msgid "scroll left"
 msgstr ""
 
-#: extension/peripherals.js:210
+#: extension/peripherals.js:265
 msgid "scroll right"
 msgstr ""
 
-#: extension/peripherals.js:251 extension/peripherals.js:257
-msgid "Peripherals"
-msgstr ""
-
-#: extension/peripherals.js:267
-msgid "Test peripherals…"
-msgstr ""
-
-#: extension/peripherals.js:280 extension/peripherals.js:298
+#: extension/peripherals.js:335 extension/peripherals.js:353
 msgid "Press a button on any device"
 msgstr ""
 
-#: extension/peripherals.js:407
-msgid "Peripheral tester"
-msgstr ""
-
-#: extension/peripherals.js:409
+#: extension/peripherals.js:464
 msgid ""
 "Press keys, click, scroll or use a controller. Everything lights up here; "
 "nothing is sent to other apps."
 msgstr ""
 
-#: extension/peripherals.js:417 extension/peripherals.js:653
-#: extension/peripherals.js:664
+#: extension/peripherals.js:472 extension/peripherals.js:733
+#: extension/peripherals.js:744
 msgid "Mouse"
 msgstr ""
 
-#: extension/peripherals.js:418 extension/peripherals.js:597
+#: extension/peripherals.js:473 extension/peripherals.js:677
 msgid "Controller"
 msgstr ""
 
-#: extension/peripherals.js:420 extension/peripherals.js:638
+#: extension/peripherals.js:475 extension/peripherals.js:718
+#: extension/prefs.js:98
 msgid "Keyboard"
 msgstr ""
 
-#: extension/peripherals.js:425
-msgid "Close"
-msgstr ""
-
-#: extension/peripherals.js:542
+#: extension/peripherals.js:621
 msgid "No controller connected (USB or Bluetooth)."
 msgstr ""
 
-#: extension/prefs.js:66
+#: extension/pieces.js:53
+msgid "The laptop screen drops to 60 Hz off the charger"
+msgstr ""
+
+#: extension/pieces.js:53
+msgid "Keeps the refresh rate on battery"
+msgstr ""
+
+#: extension/pieces.js:56
+msgid "Toggles Performance"
+msgstr ""
+
+#: extension/pieces.js:56
+msgid "The key does nothing"
+msgstr ""
+
+#: extension/pieces.js:66
+msgid "You have your own gamemode.ini"
+msgstr ""
+
+#: extension/pieces.js:67
+msgid "The marked mode turns on when a game starts"
+msgstr ""
+
+#: extension/prefs.js:96
 msgid "General"
 msgstr ""
 
-#: extension/prefs.js:68
-msgid "Top bar and menu"
-msgstr ""
-
-#: extension/prefs.js:69
-msgid "GPU temperature in the top bar"
-msgstr ""
-
-#: extension/prefs.js:70
-msgid ""
-"Only while the NVIDIA GPU is awake; it is never woken up just to read it"
-msgstr ""
-
-#: extension/prefs.js:73
-msgid "Temperature history"
-msgstr ""
-
-#: extension/prefs.js:73
-msgid "CPU and GPU chart for the last 3 minutes"
-msgstr ""
-
-#: extension/prefs.js:76
-msgid "Peripherals in the menu"
-msgstr ""
-
-#: extension/prefs.js:77
-msgid ""
-"Controllers, mice, keyboards and wireless battery; input is only read while "
-"the menu is open"
-msgstr ""
-
-#: extension/prefs.js:80
-msgid "NitroSense key"
-msgstr ""
-
-#: extension/prefs.js:80
+#: extension/prefs.js:99
 msgid "Toggles between Performance and the previous profile"
 msgstr ""
 
-#: extension/prefs.js:85
-msgid "Automatic profile"
-msgstr ""
-
-#: extension/prefs.js:86
+#: extension/prefs.js:105
 msgid "Switch the profile by itself when the charger is plugged in or removed."
 msgstr ""
 
-#: extension/prefs.js:87
+#: extension/prefs.js:106
 msgid "Keep the current one"
 msgstr ""
 
-#: extension/prefs.js:98
-msgid "System status"
+#: extension/prefs.js:110
+msgid "Only the laptop screen; the previous rate comes back when plugged in"
 msgstr ""
 
-#: extension/prefs.js:106
+#: extension/prefs.js:124
+msgid "Turn on the game mode through GameMode"
+msgstr ""
+
+#: extension/prefs.js:125
+msgid ""
+"You already have a gamemode.ini; add start/end with nitro-mode auto-start/"
+"auto-stop to it"
+msgstr ""
+
+#: extension/prefs.js:126
+msgid "Works even with the extension off or the screen locked"
+msgstr ""
+
+#: extension/prefs.js:142
 msgid "Fan control"
 msgstr ""
 
-#: extension/prefs.js:107
+#: extension/prefs.js:143
 msgid "Through the kernel acer-wmi driver (pwm)"
 msgstr ""
 
-#: extension/prefs.js:107
+#: extension/prefs.js:143
 msgid "Through the nitro_fan module"
 msgstr ""
 
-#: extension/prefs.js:108
+#: extension/prefs.js:144
 msgid "Unavailable: run ./install.sh (needs kernel-devel and dkms)"
 msgstr ""
 
-#: extension/prefs.js:109
-msgid "Charge limit"
-msgstr ""
-
-#: extension/prefs.js:109
+#: extension/prefs.js:145
 msgid "nitro_battery module loaded"
 msgstr ""
 
-#: extension/prefs.js:110
+#: extension/prefs.js:146
 msgid "Unavailable: nitro_battery module not loaded"
 msgstr ""
 
-#: extension/prefs.js:111
+#: extension/prefs.js:147
 msgid "Power profiles daemon"
 msgstr ""
 
-#: extension/prefs.js:112
+#: extension/prefs.js:148
 msgid "Integrated: Quick Settings and this menu stay in sync"
 msgstr ""
 
-#: extension/prefs.js:113
+#: extension/prefs.js:149
 msgid ""
 "Not integrated: profiles are written directly (run ./install.sh to integrate "
 "tuned-ppd)"
 msgstr ""
 
-#: extension/prefs.js:114
+#: extension/prefs.js:150
+msgid "Charge limit in GNOME Settings"
+msgstr ""
+
+#: extension/prefs.js:151
+msgid "“Preserve battery health” controls the same limit"
+msgstr ""
+
+#: extension/prefs.js:152
+msgid ""
+"UPower does not see the limit yet (run ./install.sh and load nitro_battery)"
+msgstr ""
+
+#: extension/prefs.js:153
+msgid "thermald"
+msgstr ""
+
+#: extension/prefs.js:154
+msgid "Running; it does not touch the Acer profile"
+msgstr ""
+
+#: extension/prefs.js:154
+msgid "Not running (optional)"
+msgstr ""
+
+#: extension/prefs.js:155
+msgid "Mouse DPI (ratbagd)"
+msgstr ""
+
+#: extension/prefs.js:156
+msgid "Available in the peripheral tester for supported mice"
+msgstr ""
+
+#: extension/prefs.js:157
+msgid "ratbagd not installed (sudo dnf install libratbag-ratbagd)"
+msgstr ""
+
+#: extension/prefs.js:158
 msgid "Platform profile"
 msgstr ""
 
-#: extension/prefs.js:115
+#: extension/prefs.js:159
 msgid "acer_wmi without predator_v4: run ./install.sh"
 msgstr ""
 
-#: extension/prefs.js:124
+#: extension/prefs.js:166
+msgid "Lab"
+msgstr ""
+
+#: extension/prefs.js:176
 msgid ""
 "Sets of settings turned on and off together from the menu (or with nitro-"
 "mode on NAME)."
 msgstr ""
 
-#: extension/prefs.js:125
+#: extension/prefs.js:177
 msgid "New mode"
 msgstr ""
 
-#: extension/prefs.js:139
+#: extension/prefs.js:191
 msgid "Could not save ~/.config/nitro/modes.json"
 msgstr ""
 
-#: extension/prefs.js:159
+#: extension/prefs.js:211
 #, javascript-format
 msgid "New mode %d"
 msgstr ""
 
-#: extension/prefs.js:176
+#: extension/prefs.js:228
 msgid "Name"
 msgstr ""
 
-#: extension/prefs.js:187 extension/prefs.js:193 extension/prefs.js:210
+#: extension/prefs.js:239 extension/prefs.js:245 extension/prefs.js:262
 msgid "Do not change"
 msgstr ""
 
-#: extension/prefs.js:198
+#: extension/prefs.js:250
 msgid "GPU core offset (MHz)"
 msgstr ""
 
-#: extension/prefs.js:202
+#: extension/prefs.js:254
 msgid "GPU memory offset (MHz)"
 msgstr ""
 
-#: extension/prefs.js:209
+#: extension/prefs.js:261
 msgid "GPU overclock"
 msgstr ""
 
-#: extension/prefs.js:210
+#: extension/prefs.js:262
 msgid "Default"
 msgstr ""
 
-#: extension/prefs.js:210
+#: extension/prefs.js:262
 msgid "Boost (+100/+500)"
 msgstr ""
 
-#: extension/prefs.js:210
+#: extension/prefs.js:262
 msgid "Maximum (+150/+1000)"
 msgstr ""
 
-#: extension/prefs.js:210
+#: extension/prefs.js:262
 msgid "Custom"
 msgstr ""
 
-#: extension/prefs.js:220
+#: extension/prefs.js:272
 msgid "GPU power limit (W)"
 msgstr ""
 
-#: extension/prefs.js:220
+#: extension/prefs.js:272
 msgid "0 = do not change. Many laptop drivers do not allow it."
 msgstr ""
 
-#: extension/prefs.js:225
+#: extension/prefs.js:277
 msgid "CPU in performance"
 msgstr ""
 
-#: extension/prefs.js:225
+#: extension/prefs.js:277
 msgid "tuned profile nitro-performance"
 msgstr ""
 
-#: extension/prefs.js:229
+#: extension/prefs.js:281
 msgid "Only when plugged in"
 msgstr ""
 
-#: extension/prefs.js:229
+#: extension/prefs.js:281
 msgid "Ignored on battery"
 msgstr ""
 
-#: extension/prefs.js:233
+#: extension/prefs.js:285
 msgid "Turn on when a game starts"
 msgstr ""
 
-#: extension/prefs.js:233
+#: extension/prefs.js:285
 msgid "Through Feral GameMode; only one mode can have this"
 msgstr ""
 
-#: extension/prefs.js:243
+#: extension/prefs.js:295
 msgid "Delete mode"
 msgstr ""
 
-#: extension/prefs.js:253 extension/prefs.js:254
-msgid "Fan curve"
-msgstr ""
-
-#: extension/prefs.js:255
+#: extension/prefs.js:307
 msgid ""
 "Used by the “Curve” fan option. The CPU fan follows the CPU; the GPU fan "
 "follows the hotter of the two. Above 92 °C the fans always go to 100%."
 msgstr ""
 
-#: extension/prefs.js:264
+#: extension/prefs.js:316
 msgid "Points"
 msgstr ""
 
-#: extension/prefs.js:270
+#: extension/prefs.js:322
 #, javascript-format
 msgid "Point %d"
 msgstr ""
 
-#: extension/prefs.js:295
+#: extension/prefs.js:347
 msgid "Save curve"
 msgstr ""
 
-#: extension/prefs.js:299
+#: extension/prefs.js:351
 msgid "Curve saved"
 msgstr ""
 
-#: extension/prefs.js:299
+#: extension/prefs.js:351
 msgid "Could not save the curve"
 msgstr ""
 
-#: extension/prefs.js:302
+#: extension/prefs.js:354
 msgid "Restore default curve"
 msgstr ""
 
@@ -545,46 +1092,116 @@ msgstr ""
 msgid "No changes"
 msgstr ""
 
+#: extension/tiles.js:169 extension/tiles.js:179
+msgid "LIM"
+msgstr ""
+
+#: extension/tiles.js:171
+#, javascript-format
+msgid "%d throttles since boot"
+msgstr ""
+
+#: extension/tiles.js:193
+msgid "Fan 1 · CPU"
+msgstr ""
+
+#: extension/tiles.js:193
+msgid "Fan 2 · GPU"
+msgstr ""
+
+#: extension/tiles.js:242
+msgid "tap to change"
+msgstr ""
+
+#: extension/tiles.js:264
+msgid "Auto (short)"
+msgstr ""
+
+#: extension/tiles.js:264
+msgid "Max (short)"
+msgstr ""
+
+#: extension/tiles.js:264
+msgid "Curve (short)"
+msgstr ""
+
+#: extension/tiles.js:273
+msgid "now at 60 Hz"
+msgstr ""
+
+#: extension/tiles.js:277
+#, javascript-format
+msgid "turns on %s"
+msgstr ""
+
+#: extension/tiles.js:403
+msgid "On the GPU"
+msgstr ""
+
+#: extension/tiles.js:407
+msgid "GPU asleep: no app is using it"
+msgstr ""
+
 #: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:6
-msgid "Show the GPU temperature in the top bar"
+msgid "Menu items in the grid"
 msgstr ""
 
 #: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:7
 msgid ""
-"Only while the NVIDIA GPU is awake; it is never woken up just to read it."
+"Each entry is id:size:row:column (4 columns). Full-width sizes (full, "
+"compact, grid, row, normal, short) keep the classic look; the others are "
+"tiles (1x1, 2x1, 2x2, 4x2). Items not listed are not shown."
 msgstr ""
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:11
-msgid "Show the temperature history in the menu"
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:12
+msgid "Space between menu items, in pixels"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:16
+msgid "Menu pieces shown without their title"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:17
+msgid "Ids: profile, fans, sensors."
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:21
+msgid "Top bar items, in order"
 msgstr ""
 
 #: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:22
 msgid ""
-"Profile applied when the charger is plugged in (empty = keep the current one)"
+"Ids: icon, cpu, gpu, mode, fan, power. The GPU temperature only shows while "
+"the GPU is awake; the power draw only on battery."
 msgstr ""
 
 #: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:33
+msgid ""
+"Profile applied when the charger is plugged in (empty = keep the current one)"
+msgstr ""
+
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:44
 msgid "Profile applied when running on battery (empty = keep the current one)"
 msgstr ""
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:37
-msgid "Show peripherals in the menu"
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:48
+msgid "Lower the laptop screen to 60 Hz on battery"
 msgstr ""
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:38
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:49
 msgid ""
-"Controllers, mice and keyboards, wireless battery and the last input; input "
-"is only read while the menu is open."
+"Only the built-in screen; the previous refresh rate comes back when plugged "
+"in."
 msgstr ""
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:42
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:53
 msgid "Modes section expanded in the menu"
 msgstr ""
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:46
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:57
 msgid "Peripherals section expanded in the menu"
 msgstr ""
 
-#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:50
+#: extension/schemas/org.gnome.shell.extensions.nitro.gschema.xml:61
 msgid "Use the NitroSense key to toggle the Performance profile"
 msgstr ""

@@ -150,6 +150,24 @@ class NitroModeTest(unittest.TestCase):
         self.assertIsNone(self.nm.active_state())
         self.assertFalse(Path(self.nm.ACTIVE).exists())
 
+    def test_gamemode_liga_e_desliga_o_modo_marcado(self):
+        self.assertEqual(self.nm.auto_start(), 0)
+        st = self.nm.active_state()
+        self.assertEqual((st['mode'], st['auto']), ('gamer', True))
+        self.calls.clear()
+        self.assertEqual(self.nm.auto_stop(), 0)
+        self.assertIn(('nitro-profile', 'balanced'), self.actions())
+        self.assertIsNone(self.nm.active_state())
+
+    def test_gamemode_nao_mexe_no_modo_que_voce_ligou(self):
+        self.nm.turn_on('silencio')
+        self.calls.clear()
+        self.nm.auto_start()
+        self.assertEqual(self.actions(), [])
+        self.nm.auto_stop()
+        self.assertEqual(self.actions(), [])
+        self.assertEqual(self.nm.active_state()['mode'], 'silencio')
+
     def test_modo_desconhecido(self):
         self.assertEqual(self.nm.turn_on('nao-existe'), 2)
 
