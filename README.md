@@ -68,7 +68,7 @@ Se o `acer_wmi` já estiver carregado, ele é recarregado na hora com `predator_
 - **Cartão do topo**: modo atual e se está na tomada ou na bateria.
 - Ordem do menu (padrão): Perfil, Ventoinhas, Limite de carga, Sensores, Histórico, Modos,
   Periféricos e GPU. O cartão do topo fica fixo e o resto **rola**. **Tudo isso é editável** em
-  Preferências › Layout (veja abaixo).
+  Preferências › Laboratório (veja abaixo).
 - **Selo "LIMITANDO"** no canto do bloco da CPU quando o kernel registrou limitação por
   temperatura nos últimos 30 s; na GPU, também "NO LIMITE" quando ela está presa no limite de
   energia (motivos do `nvidia-smi`).
@@ -147,17 +147,28 @@ mas só quando estão diferentes do salvo (nada de `pkexec` a cada desbloqueio d
 O menu é uma **grade de 4 colunas** que você monta arrastando:
 
 - **Layouts prontos**: Clássico (o menu de sempre), Compacto, Central de controle, Gamer e Mínimo.
-- **Posição livre**: cada item vai na célula que você escolher; nada se encaixa sozinho e buracos
-  são permitidos. A prévia fica verde quando cabe e vermelha quando sobrepõe.
+- **Personalizado**: ao mexer na grade, o layout vira *Personalizado* sozinho e a sua edição fica
+  guardada à parte; escolher um pronto não a apaga, e clicar em *Personalizado* a traz de volta.
+- **Meus layouts**: *Salvar como…* guarda a grade com um nome (nome repetido substitui). No lápis
+  de cada um: renomear, substituir pela grade atual ou apagar (pede um segundo clique). O layout em
+  uso — pronto, salvo ou personalizado — fica com contorno.
+- **Posição livre**: cada item vai na célula que você escolher. Soltar em cima de outro item
+  **troca os dois** de lugar; se não der para trocar (vários itens no caminho, ou item novo vindo da
+  gaveta), quem está no caminho **desce** para abrir espaço. Linhas que ficam vazias somem.
+  A prévia fica verde quando dá para soltar e vermelha fora da grade.
 - **Tamanhos**: ladrilhos 1×1, 2×1, 2×2 e 4×2 (CPU, GPU, cada ventoinha, bateria, perfil, limite de
   carga, 60 Hz, GameMode, histórico, curva, apps da GPU com Fechar/Forçar…) ou o **bloco clássico** de
   largura inteira, com as variantes de antes (faixa com ícones ou só nomes, sensores 2×2 ou em uma
   linha, histórico normal ou curto, GPU completa ou só o título).
 - **Distância entre os itens**: 0 a 24 px.
 - **Barra superior**: ícone, temperaturas, modo ligado, rotação e consumo, na ordem que quiser.
-- Teclado: setas movem uma célula, + e − trocam o tamanho, Delete tira, Enter abre as opções.
+- Teclado: setas movem uma célula (em cima de outro item, trocam), + e − trocam o tamanho, Delete
+  tira, Enter abre as opções.
 
-Por baixo são as chaves `grid-items` (`id:tamanho:linha:coluna`), `grid-gap` e `panel-items`.
+Por baixo são as chaves `grid-items` (`id:tamanho:linha:coluna`, o que o menu mostra), `grid-custom`
+(o Personalizado), `saved-layouts` (JSON `[{"name", "items"}]`), `grid-gap` e `panel-items`.
+As regras da grade (soltar, trocar, empurrar, layouts com nome) ficam em `extension/layout.js`, com
+testes em `tests/store.test.js`.
 
 ## Preferências
 
